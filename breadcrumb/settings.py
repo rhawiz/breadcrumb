@@ -27,6 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Cross domain access to the API, set to True to allow any domain to
+# interact with the API or False to only allow domains contained in 'CORS_ORIGIN_WHITELIST'
+CORS_ORIGIN_ALLOW_ALL = True
+
+# Cross domain white list
+CORS_ORIGIN_WHITELIST = ()
 
 # Application definition
 
@@ -37,7 +43,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'rest_framework',
     'api',
+    'corsheaders',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -77,11 +86,15 @@ WSGI_APPLICATION = 'breadcrumb.wsgi.application'
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'breadcrumb',
+            'USER': 'root',
+            'PASSWORD': 'admin',
+            'HOST': 'localhost',
+            'PORT': '3306',
+        }
     }
-}
 
 
 # Internationalization
