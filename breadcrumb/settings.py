@@ -84,33 +84,33 @@ WSGI_APPLICATION = 'breadcrumb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-# DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.mysql',
-#             'NAME': 'breadcrumb',
-#             'USER': 'root',
-#             'PASSWORD': 'admin',
-#             'HOST': 'localhost',
-#             'PORT': '3306',
-#         }
-#     }
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'breadcrumb',
-        'HOST': '/opt/bitnami/mysql/tmp/mysql.sock',
-        'PORT': '3306',
-        'USER': 'root',
-        'PASSWORD': 'lN67Elbg'
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'breadcrumb',
+            'USER': 'root',
+            'PASSWORD': 'admin',
+            'HOST': 'localhost',
+            'PORT': '3306',
+        }
     }
-}
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'breadcrumb',
+#         'HOST': '/opt/bitnami/mysql/tmp/mysql.sock',
+#         'PORT': '3306',
+#         'USER': 'root',
+#         'PASSWORD': 'lN67Elbg'
+#     }
+# }
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-gb'
 
 TIME_ZONE = 'UTC'
 
