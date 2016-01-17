@@ -85,16 +85,27 @@ WSGI_APPLICATION = 'breadcrumb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.mysql',
+#             'NAME': 'breadcrumb',
+#             'USER': 'root',
+#             'PASSWORD': 'admin',
+#             'HOST': 'localhost',
+#             'PORT': '3306',
+#         }
+#     }
+
 DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'breadcrumb',
-            'USER': 'root',
-            'PASSWORD': 'admin',
-            'HOST': 'localhost',
-            'PORT': '3306',
-        }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'breadcrumb',
+        'HOST': '/opt/bitnami/mysql/tmp/mysql.sock',
+        'PORT': '3306',
+        'USER': 'root',
+        'PASSWORD': 'lN67Elbg'
     }
+}
 
 
 # Internationalization
@@ -114,4 +125,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
