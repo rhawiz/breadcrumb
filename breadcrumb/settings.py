@@ -12,9 +12,9 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from urllib2 import urlopen
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -80,11 +80,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'breadcrumb.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-DATABASES = {
+ip = urlopen('http://ip.42.pl/raw').read()
+
+if ip == '104.155.104.129':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'breadcrumb',
+            'HOST': '/opt/bitnami/mysql/tmp/mysql.sock',
+            'PORT': '3306',
+            'USER': 'root',
+            'PASSWORD': 'lN67Elbg'
+        }
+    }
+else:
+    DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'breadcrumb',
@@ -94,18 +107,6 @@ DATABASES = {
             'PORT': '3306',
         }
     }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'breadcrumb',
-#         'HOST': '/opt/bitnami/mysql/tmp/mysql.sock',
-#         'PORT': '3306',
-#         'USER': 'root',
-#         'PASSWORD': 'lN67Elbg'
-#     }
-# }
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -119,7 +120,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
