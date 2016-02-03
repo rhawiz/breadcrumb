@@ -37,3 +37,11 @@ class UserProfileList(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
 
+
+class Signup(generics.CreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = CreateUserProfileSerializer
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+

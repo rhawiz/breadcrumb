@@ -5,6 +5,8 @@ from django.db.models import signals
 
 
 # Create your models here.
+from jsonfield import JSONField
+
 
 class TestModel(models.Model):
     field1 = models.CharField(max_length=100, blank=True)
@@ -24,6 +26,8 @@ class UserProfile(models.Model):
         (GENDER_CHOICE_FEMALE, 'Female'),
     )
     gender = models.IntegerField(choices=GENDER_CHOICES, default=GENDER_CHOICE_UNSET)
+
+    aliases = JSONField(null=True, blank=True)
 
     def __unicode__(self):
         return self.user.username

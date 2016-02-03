@@ -40,10 +40,11 @@ class CreateUserProfileSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
+    aliases = serializers.JSONField(required=False)
 
     class Meta:
         model = UserProfile
-        fields = ('id', 'gender', 'username', 'email', 'password', 'first_name', 'last_name')
+        fields = ('id', 'gender', 'username', 'email', 'password', 'first_name', 'last_name', 'aliases')
 
     def create(self, validated_data):
         # TODO: Fix AttributeError
