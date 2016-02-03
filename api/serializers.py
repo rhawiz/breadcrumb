@@ -60,7 +60,7 @@ class CreateUserProfileSerializer(serializers.Serializer):
         user = user_serializer.save()
 
         user_profile_data = {}
-        user_profile_fields = ['gender']
+        user_profile_fields = ['gender', 'aliases']
         for field in user_profile_fields:
             if field in validated_data:
                 user_profile_data[field] = validated_data[field]
