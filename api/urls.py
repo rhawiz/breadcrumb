@@ -6,6 +6,7 @@ urlpatterns = [
     url(r'^detail/(?P<pk>[0-9]+)/$', views.TestDetailView.as_view()),
     url(r'^list/$', views.TestListView.as_view()),
     url(r'^users/$', views.UserProfileList.as_view()),
+    url(r'^users/(?P<pk>[^/]+)/$', views.UserProfileDetail.as_view()),
     url(r'^signup/$', views.Signup.as_view()),
 ]
 

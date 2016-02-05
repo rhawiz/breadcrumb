@@ -33,13 +33,23 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(read_only=True, source='user.username')
+    email = serializers.CharField(read_only=True, source='user.email')
+    first_name = serializers.CharField(read_only=True, source='user.first_name')
+    last_name = serializers.CharField(read_only=True, source='user.last_name')
+
+
+    class Meta:
+        model = UserProfile
+        fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases')
 
 class CreateUserProfileSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    email = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
-    first_name = serializers.CharField(required=False)
-    last_name = serializers.CharField(required=False)
+    username = serializers.CharField(required=True, write_only=True)
+    email = serializers.CharField(required=True, write_only=True)
+    password = serializers.CharField(required=True, write_only=True)
+    first_name = serializers.CharField(required=False, write_only=True)
+    last_name = serializers.CharField(required=False, write_only=True)
     aliases = serializers.JSONField(required=False)
 
     class Meta:
@@ -47,7 +57,7 @@ class CreateUserProfileSerializer(serializers.Serializer):
         fields = ('id', 'gender', 'username', 'email', 'password', 'first_name', 'last_name', 'aliases')
 
     def create(self, validated_data):
-        # TODO: Fix AttributeError
+
         if 'fullname' in validated_data:
             if validated_data['fullname'].find(' ') != -1:
                 first_name, last_name = validated_data['fullname'].split(' ')
