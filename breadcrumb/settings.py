@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'breadcrumb.wsgi.application'
 
 ip = urlopen('http://ip.42.pl/raw').read()
 
-if ip == '104.155.104.129':
+if ip == '104.155.75.17':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
