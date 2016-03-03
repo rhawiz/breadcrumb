@@ -15,11 +15,12 @@ class run_deploy(APIView):
     def get(self, request, *args, **kwargs):
         import subprocess
         import os
+        deploy_path = os.path.abspath('deploy.sh')
         try:
-            subprocess.call([os.path.relpath('../deploy.sh')])
+            subprocess.call([deploy_path])
             return Response(data="Successfully redeployed application")
         except Exception, e:
-            return Response(data="Failed to redeploy: {}".format(e))
+            return Response(data="Failed to redeploy at {}: {}".format(deploy_path,e))
 
 class TestDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = TestModel.objects.all()
