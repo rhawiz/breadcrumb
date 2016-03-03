@@ -18,8 +18,8 @@ class run_deploy(APIView):
         try:
             subprocess.call(['./deploy.sh'])
             return Response(data="Successfully redeployed application")
-        except:
-            return Response(data="Failed to redeploy")
+        except Exception, e:
+            return Response(data="Failed to redeploy: {}".format(e))
 
 class TestDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = TestModel.objects.all()
