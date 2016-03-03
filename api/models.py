@@ -16,19 +16,6 @@ class TestModel(models.Model):
     field2 = models.IntegerField(blank=True)
 
 
-class SocialAccount(models.Model):
-    PROVIDER_CHOICE_FACEBOOK = 'facebook'
-    PROVIDER_CHOICE_TWITTER = 'twitter'
-    PROVIDER_CHOICES = (
-        (PROVIDER_CHOICE_FACEBOOK, 'facebook'),
-        (PROVIDER_CHOICE_TWITTER, 'twitter'),
-    )
-
-    user = models.ForeignKey(UserProfile)
-    social_id = models.CharField(max_length=255)
-    social_token = models.CharField(max_length=255)
-    provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
-
 
 class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -48,3 +35,18 @@ class UserProfile(models.Model):
 
     def __unicode__(self):
         return self.user.username
+
+
+
+class SocialAccount(models.Model):
+    PROVIDER_CHOICE_FACEBOOK = 'facebook'
+    PROVIDER_CHOICE_TWITTER = 'twitter'
+    PROVIDER_CHOICES = (
+        (PROVIDER_CHOICE_FACEBOOK, 'facebook'),
+        (PROVIDER_CHOICE_TWITTER, 'twitter'),
+    )
+
+    user = models.ForeignKey(UserProfile)
+    social_id = models.CharField(max_length=255)
+    social_token = models.CharField(max_length=255)
+    provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)

@@ -120,7 +120,6 @@ class SocialLogin(APIView):
         acceptable_providers = ['facebook', 'twitter']
         access_token = request.data.get('access_token', None)
         provider = request.data.get('access_token', None)
-
         if not access_token:
             return Response(data={"access_token": ["This field is required."]})
 
