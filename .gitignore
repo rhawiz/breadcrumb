@@ -1,2 +1,3 @@
 /runserver.bat
 /api/migrations
+/deploy.sh
