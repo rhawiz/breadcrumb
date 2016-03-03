@@ -10,6 +10,17 @@ from api.serializers import *
 
 # Create your views here.
 
+class run_deploy(APIView):
+
+    def get(self, request, *args, **kwargs):
+        import subprocess
+
+        try:
+            subprocess.call(['./deploy.sh'])
+            return Response(data="Successfully redeployed application")
+        except:
+            return Response(data="Failed to redeploy")
+
 class TestDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = TestModel.objects.all()
     serializer_class = TestSerizalizer
