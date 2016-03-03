@@ -16,7 +16,7 @@ class run_deploy(APIView):
         import subprocess
 
         try:
-            subprocess.call(['./deploy.sh'])
+            subprocess.call(['../deploy.sh'])
             return Response(data="Successfully redeployed application")
         except Exception, e:
             return Response(data="Failed to redeploy: {}".format(e))
