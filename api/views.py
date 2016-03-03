@@ -6,7 +6,7 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from oauth2_provider.models import AccessToken, Application
 from api.serializers import *
-import breadcrumb_intellegence.sent_analyser as sa
+import breadcrumb_intellegence.sentiment_analyser as sa
 import requests as r
 
 # Create your views here.
@@ -117,8 +117,29 @@ class SentAnalyser(APIView):
 class SocialLogin(APIView):
 
     def post(self, request, *args, **kwargs):
-        url = "https://www.facebook.com/dialog/oauth?client_id=1696090350621812&response_type=code&scope=public_profile,user_friends&redirect_uri=https://www.google.com"
+        acceptable_providers = ['facebook', 'twitter']
+        access_token = request.data.get('access_token', None)
+        provider = request.data.get('access_token', None)
+
+        if not access_token:
+            return Response(data={"access_token": ["This field is required."]})
+
+        if not provider:
+            return Response(data={"provider": ["This field is required."]})
+
+        if provider not in acceptable_providers:
+            return Response(data={"provider": ["Not a valid provider, choices are:{}".format(acceptable_providers)]})
+
+        url = "https://graph.facebook.com/me?access_token={}"
         response = r.get(url)
         print response.content
         return Response(data={})
 
+class ExtractSocial(APIView):
+
+    def post(self, request, *args, **kwargs):
+
+        TEST_TOKEN = 'CAACxjKIpqZBoBABKLxJvoZCvU1pasHKFmE3M9p7iyPM57i3TYqd0r76r2Sssru8i35fWJ88cDnDYvvu7iurgp1CGMp2h1rHgXSxAY2uNwQMobZBgrZBa41JJVrM85CcsY0kfOWx3o4Jln25HEGNI80TUPaXa3AAVkVtoqtFejQ8ei7ZBHdRiZCXBEZCdtdOAikcNT3znMjgsAZDZD'
+
+
+        return
