@@ -7,6 +7,8 @@ from django.db.models import signals
 # Create your models here.
 from jsonfield import JSONField
 
+from django.contrib.auth.models import User
+User._meta.get_field('email')._unique = True
 
 class TestModel(models.Model):
     field1 = models.CharField(max_length=100, blank=True)

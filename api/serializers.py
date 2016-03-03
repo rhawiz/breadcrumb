@@ -1,6 +1,17 @@
+from django.contrib.auth import authenticate
+from django.core.exceptions import MultipleObjectsReturned
+from oauth2_provider.models import Application, AccessToken
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError, AuthenticationFailed
+
+from api.exceptions import *
+from rest_framework.exceptions import *
 from api.models import *
 from rest_framework.utils import model_meta
+
+from api.utils import generate_access_token
+from rest_framework.fields import empty
+import time
 
 
 class TestSerizalizer(serializers.ModelSerializer):
@@ -10,6 +21,8 @@ class TestSerizalizer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
         fields = (
@@ -33,16 +46,17 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source='user.username')
     email = serializers.CharField(read_only=True, source='user.email')
     first_name = serializers.CharField(read_only=True, source='user.first_name')
     last_name = serializers.CharField(read_only=True, source='user.last_name')
 
-
     class Meta:
         model = UserProfile
         fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases')
+
 
 class CreateUserProfileSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, write_only=True)
@@ -80,3 +94,56 @@ class CreateUserProfileSerializer(serializers.Serializer):
         user_profile = UserProfile.objects.create(**user_profile_data)
         user_profile.save()
         return user_profile
+
+
+class AccessTokenSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    expires = serializers.SerializerMethodField('_get_expires_timestamp')
+
+    class Meta:
+        model = AccessToken
+        fields = ('user', 'token', 'expires', 'scope')
+
+    def _get_expires_timestamp(self, obj):
+        return int(time.mktime(obj.expires.timetuple()))
+
+
+class LoginSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)
+    email = serializers.CharField(required=False)
+
+    def create(self, validated_data):
+        user = validated_data.get('user')
+        access_token = generate_access_token(user)
+
+        user_data = UserSerializer(user).data
+        access_token_data = AccessTokenSerializer(access_token).data
+        self._data = {
+            "access_token": access_token_data
+        }
+
+        return access_token
+
+    def validate(self, data):
+
+        username = data.get('username', None)
+        email = data.get('email', None)
+        password = data.get('password', None)
+
+        if not password:
+            raise NotAuthenticated()
+        if username:
+            user = authenticate(username=username, password=password)
+        elif email:
+            user = authenticate(username=email, password=password)
+        else:
+            raise NotAuthenticated()
+        if not user:
+            raise AuthenticationFailed()
+
+        return {'user': user}
+
+    class Meta:
+        model = AccessToken
+        fields = ('username', 'email', 'password')

@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'oauth2_provider',
     'rest_framework',
     'api',
     'corsheaders',
@@ -107,6 +108,19 @@ else:
             'PORT': '3306',
         }
     }
+
+
+AUTHENTICATION_BACKENDS = (
+    'oauth2_provider.backends.OAuth2Backend',
+    'django.contrib.auth.backends.ModelBackend',
+    'api.backends.EmailAuthBackend',
+
+)
+
+OAUTH2_PROVIDER = {
+    'SCOPES': 'read write groups',
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 31536000,
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/

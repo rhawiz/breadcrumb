@@ -1,7 +1,11 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
+from rest_framework.views import APIView
+from oauth2_provider.models import AccessToken, Application
 from api.serializers import *
+
+
 # Create your views here.
 
 class TestDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -17,6 +21,7 @@ class TestDetailView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
 
+
 class TestListView(generics.ListCreateAPIView):
     queryset = TestModel.objects.all()
     serializer_class = TestSerizalizer
@@ -26,6 +31,7 @@ class TestListView(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
+
 
 class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = UserProfile.objects.all()
@@ -39,6 +45,7 @@ class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
 
 class UserProfileList(generics.ListAPIView):
     queryset = UserProfile.objects.all()
@@ -58,6 +65,7 @@ class Signup(generics.CreateAPIView):
     """
     Create a model instance.
     """
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -65,3 +73,13 @@ class Signup(generics.CreateAPIView):
         headers = self.get_success_headers(serializer.data)
         response = UserProfileSerializer(instance).data
         return Response(response, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class Login(APIView):
+    queryset = AccessToken.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        login_serializer = LoginSerializer(data=request.data)
+        login_serializer.is_valid(raise_exception=True)
+        login_serializer.save()
+        return Response(data=login_serializer.data)
