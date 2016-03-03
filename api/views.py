@@ -6,12 +6,12 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from oauth2_provider.models import AccessToken, Application
 from api.serializers import *
-
+import breadcrumb_intellegence.sent_analyser as sa
+import requests as r
 
 # Create your views here.
 
 class run_deploy(APIView):
-
     def get(self, request, *args, **kwargs):
         import subprocess
         import os
@@ -20,7 +20,8 @@ class run_deploy(APIView):
             subprocess.call([deploy_path])
             return Response(data="Successfully redeployed application")
         except Exception, e:
-            return Response(data="Failed to redeploy at {}: {}".format(deploy_path,e))
+            return Response(data="Failed to redeploy at {}: {}".format(deploy_path, e))
+
 
 class TestDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = TestModel.objects.all()
@@ -67,7 +68,6 @@ class UserProfileList(generics.ListAPIView):
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
-
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
@@ -100,3 +100,25 @@ class Login(APIView):
         login_serializer.is_valid(raise_exception=True)
         login_serializer.save()
         return Response(data=login_serializer.data)
+
+
+class SentAnalyser(APIView):
+    def post(self, request, *args, **kwargs):
+        text = request.data.get('text', None)
+
+        if not text:
+            return Response(data={"text": ["This field is required."]})
+
+        data = sa.analyse_text(text)
+        print data
+
+        return Response(data=data)
+
+class SocialLogin(APIView):
+
+    def post(self, request, *args, **kwargs):
+        url = "https://www.facebook.com/dialog/oauth?client_id=1696090350621812&response_type=code&scope=public_profile,user_friends&redirect_uri=https://www.google.com"
+        response = r.get(url)
+        print response.content
+        return Response(data={})
+

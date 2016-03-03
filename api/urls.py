@@ -9,6 +9,9 @@ urlpatterns = [
     # Session
     url(r'^signup/$', views.Signup.as_view(), name="signup"),
     url(r'^login/$', views.Login.as_view(), name="login"),
+    url(r'^sent_analyser/$', views.SentAnalyser.as_view(), name="sent_analyser"),
+    url(r'^social_login/$', views.SocialLogin.as_view(), name="social_login"),
+
     #url(r"^logout/$", views.Logout.as_view(), name="logout"),
 
 ]
