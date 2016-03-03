@@ -1,3 +1,5 @@
+from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
@@ -50,6 +52,9 @@ class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
 class UserProfileList(generics.ListAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
