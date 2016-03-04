@@ -1,3 +1,4 @@
+import datetime
 from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,6 +9,7 @@ from oauth2_provider.models import AccessToken, Application
 from api.serializers import *
 import breadcrumb_intellegence.sentiment_analyser as sa
 import requests as r
+
 
 # Create your views here.
 
@@ -79,10 +81,6 @@ class Signup(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
 
-    """
-    Create a model instance.
-    """
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -114,9 +112,10 @@ class SentAnalyser(APIView):
 
         return Response(data=data)
 
-class SocialLogin(APIView):
 
+class SocialLogin(APIView):
     def post(self, request, *args, **kwargs):
+        # todo: Put these all into serializers
         acceptable_providers = ['facebook', 'twitter']
         access_token = request.data.get('access_token', None)
         provider = request.data.get('access_token', None)
@@ -134,11 +133,39 @@ class SocialLogin(APIView):
         print response.content
         return Response(data={})
 
+
 class ExtractSocial(APIView):
-
     def post(self, request, *args, **kwargs):
+        grant_type = 'fb_exchange_token'
+        client_id = '195217574177770'
+        client_secret = 'd7c48a5db8ca2a126b71d487fd456817'
+        fb_exchange_token = 'EAACxjKIpqZBoBABd2ETtO8qTMvy4W6ygVa9ZCH3e6HW5UXeLAZA8XJSLt1ZBXlFEouPXdQngtpxnkCTMyGTeSbRQd3t3aV6b24VVYX3MbsVz4oD4zTPojTQTc8ZCs7CY4xR9BiWmYbQ8FqMkR7msZAmidO3ke66onkYAjezaK0dQZDZD'
 
-        TEST_TOKEN = 'CAACxjKIpqZBoBABKLxJvoZCvU1pasHKFmE3M9p7iyPM57i3TYqd0r76r2Sssru8i35fWJ88cDnDYvvu7iurgp1CGMp2h1rHgXSxAY2uNwQMobZBgrZBa41JJVrM85CcsY0kfOWx3o4Jln25HEGNI80TUPaXa3AAVkVtoqtFejQ8ei7ZBHdRiZCXBEZCdtdOAikcNT3znMjgsAZDZD'
+        fb_access_token_url = "https://graph.facebook.com/oauth/access_token?grant_type={}&client_id={}&client_secret={}&fb_exchange_token={}".format(
+            grant_type, client_id, client_secret, fb_exchange_token)
+
+        fb_access_token_response =  r.get(fb_access_token_url).content
+
+        access_token = fb_access_token_response.split('&')[0].split('=')[1]
+        expires = fb_access_token_response.split('&')[1].split('=')[1]
+
+        ts_now = time.time()
+        ts_expires = ts_now + float(expires)
+
+        print datetime.datetime.fromtimestamp(ts_expires).strftime('%Y-%m-%d %H:%M:%S')
+
+        user_feed_url = "https://graph.facebook.com/me?access_token={}&fields=feed.include_hidden(true)".format(access_token)
+        user_feed_paginated = r.get(user_feed_url).json().get('feed')
+        user_feed= []
+
+        while 'paging' in user_feed_paginated:
+            print 1
+            user_feed.append(user_feed_paginated.get('data'))
+            user_feed_url = user_feed_paginated.get('paging').get('next')
+            user_feed_paginated = r.get(user_feed_url).json().get('feed')
 
 
-        return
+        print user_feed
+
+        data = user_feed
+        return Response(data=data)

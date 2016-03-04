@@ -147,3 +147,5 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessToken
         fields = ('username', 'email', 'password')
+
+
