@@ -176,7 +176,11 @@ class ExtractSocial(APIView):
 
         fb_access_token_response = r.get(fb_access_token_url).content
         # access_token = fb_access_token_response.split('&')[0].split('=')[1]
-        access_token = 'EAACxjKIpqZBoBAIrwnP4rWovBr6dZBy9BZAiyTDVgQRZAZCYKI2cXZBUilh0VgRICRvWxeken2NJfYdBuulqyKFVPUkx6KTS4mlOltsuPDYNYNALw58gPvk7gPwZCS3WZA3mZAH8ALyLGuSX6pWmzYcU4pceTa0fgHkOErQjwZCs9w0wZDZD'
+
+        if 'access_token' in request.data:
+            access_token = request.data.get('access_token')
+        else:
+            access_token = 'EAACxjKIpqZBoBAIrwnP4rWovBr6dZBy9BZAiyTDVgQRZAZCYKI2cXZBUilh0VgRICRvWxeken2NJfYdBuulqyKFVPUkx6KTS4mlOltsuPDYNYNALw58gPvk7gPwZCS3WZA3mZAH8ALyLGuSX6pWmzYcU4pceTa0fgHkOErQjwZCs9w0wZDZD'
         # expires = fb_access_token_response.split('&')[1].split('=')[1]
 
         ts_now = time.time()
@@ -188,6 +192,9 @@ class ExtractSocial(APIView):
             access_token)
 
         user_feed_paginated = r.get(user_feed_url).json().get('feed')
+
+        if not user_feed_paginated:
+            return Response(data={'Error':'Invalid Access Token: {}'.format(access_token)})
         all_user_feed = user_feed_paginated.get('data')
 
         while user_feed_paginated:
