@@ -9,9 +9,12 @@ from oauth2_provider.models import AccessToken, Application
 from api.serializers import *
 import breadcrumb_intellegence.sentiment_analyser as sa
 import requests as r
+from operator import itemgetter
 
 
 # Create your views here.
+
+
 
 class run_deploy(APIView):
     def get(self, request, *args, **kwargs):
@@ -23,6 +26,32 @@ class run_deploy(APIView):
             return Response(data="Successfully redeployed application")
         except Exception, e:
             return Response(data="Failed to redeploy at {}: {}".format(deploy_path, e))
+
+
+class TestView(APIView):
+    def get(self, request, *args, **kwargs):
+        test_data = [
+            {
+                'field1': 'obj1',
+                'dict': {
+                    'dict_field1': 2,
+                }
+            },
+            {
+                'field1': 'obj2',
+                'dict': {
+                    'dict_field1': 1,
+                }
+            },
+            {
+                'field1': 'obj3',
+                'dict': {
+                    'dict_field1': 3,
+                }
+            },
+        ]
+
+        return Response(data=sorted(test_data, key=lambda k: k['dict']['dict_field1']))
 
 
 class TestDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -126,7 +155,8 @@ class SocialLogin(APIView):
             return Response(data={"provider": ["This field is required."]})
 
         if provider not in acceptable_providers:
-            return Response(data={"provider": ["Not a valid provider, choices are:{}".format(acceptable_providers)]})
+            return Response(
+                data={"provider": ["Not a valid provider, choices are:{}".format(acceptable_providers)]})
 
         url = "https://graph.facebook.com/me?access_token={}"
         response = r.get(url)
@@ -144,28 +174,38 @@ class ExtractSocial(APIView):
         fb_access_token_url = "https://graph.facebook.com/oauth/access_token?grant_type={}&client_id={}&client_secret={}&fb_exchange_token={}".format(
             grant_type, client_id, client_secret, fb_exchange_token)
 
-        fb_access_token_response =  r.get(fb_access_token_url).content
-
-        access_token = fb_access_token_response.split('&')[0].split('=')[1]
-        expires = fb_access_token_response.split('&')[1].split('=')[1]
+        fb_access_token_response = r.get(fb_access_token_url).content
+        # access_token = fb_access_token_response.split('&')[0].split('=')[1]
+        access_token = 'EAACxjKIpqZBoBAIrwnP4rWovBr6dZBy9BZAiyTDVgQRZAZCYKI2cXZBUilh0VgRICRvWxeken2NJfYdBuulqyKFVPUkx6KTS4mlOltsuPDYNYNALw58gPvk7gPwZCS3WZA3mZAH8ALyLGuSX6pWmzYcU4pceTa0fgHkOErQjwZCs9w0wZDZD'
+        # expires = fb_access_token_response.split('&')[1].split('=')[1]
 
         ts_now = time.time()
-        ts_expires = ts_now + float(expires)
+        # ts_expires = ts_now + float(expires)
 
-        print datetime.datetime.fromtimestamp(ts_expires).strftime('%Y-%m-%d %H:%M:%S')
 
-        user_feed_url = "https://graph.facebook.com/me?access_token={}&fields=feed.include_hidden(true)".format(access_token)
+
+        user_feed_url = "https://graph.facebook.com/me?access_token={}&fields=feed.include_hidden(true)".format(
+            access_token)
+
         user_feed_paginated = r.get(user_feed_url).json().get('feed')
-        user_feed= []
+        all_user_feed = user_feed_paginated.get('data')
 
-        while 'paging' in user_feed_paginated:
-            print 1
-            user_feed.append(user_feed_paginated.get('data'))
-            user_feed_url = user_feed_paginated.get('paging').get('next')
-            user_feed_paginated = r.get(user_feed_url).json().get('feed')
+        while user_feed_paginated:
+            if 'paging' in user_feed_paginated:
+                user_feed_url = user_feed_paginated.get('paging').get('next', None)
+                user_feed_paginated = r.get(user_feed_url).json()
+                all_user_feed += user_feed_paginated.get('data')
+            else:
+                user_feed_paginated = None
+        user_feed = []
 
+        for content in all_user_feed:
+            if 'message' in content:
+                user_feed.append(content)
 
-        print user_feed
-
+        for content in user_feed:
+            sent_dict = sa.analyse_text(content.get('message'))
+            content['sentiment_analysis'] = sent_dict
+        user_feed = sorted(user_feed, key=lambda k: k['sentiment_analysis']['probability']['neg'], reverse=True)
         data = user_feed
         return Response(data=data)

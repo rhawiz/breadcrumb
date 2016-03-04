@@ -5,6 +5,7 @@ from api import views
 urlpatterns = [
     url(r'^users/$', views.UserProfileList.as_view()),
     url(r'^users/(?P<pk>[^/]+)/$', views.UserProfileDetail.as_view()),
+    url(r'^test/$', views.TestView.as_view()),
 
     # Session
     url(r'^signup/$', views.Signup.as_view(), name="signup"),

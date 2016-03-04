@@ -4,6 +4,8 @@ from oauth2_provider.models import Application, AccessToken
 from oauth2_provider.settings import oauth2_settings
 from oauthlib.oauth2.rfc6749.tokens import random_token_generator
 
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
 
 def generate_access_token(user):
 
