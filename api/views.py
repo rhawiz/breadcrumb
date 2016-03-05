@@ -105,7 +105,7 @@ class UserProfileList(generics.ListAPIView):
 
 class Signup(generics.CreateAPIView):
     queryset = UserProfile.objects.all()
-    serializer_class = CreateUserProfileSerializer
+    serializer_class = SignupSerializer
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
@@ -163,6 +163,9 @@ class SocialLogin(APIView):
         print response.content
         return Response(data={})
 
+class SocialSignup(APIView):
+    def post(self, request, *args, **kwargs):
+        pass
 
 class ExtractSocial(APIView):
     def post(self, request, *args, **kwargs):
@@ -194,7 +197,7 @@ class ExtractSocial(APIView):
         user_feed_paginated = r.get(user_feed_url).json().get('feed')
 
         if not user_feed_paginated:
-            return Response(data={'Error':'Invalid Access Token: {}'.format(access_token)})
+            return Response(data={'Error': 'Invalid Access Token: {}'.format(access_token)})
         all_user_feed = user_feed_paginated.get('data')
 
         while user_feed_paginated:

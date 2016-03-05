@@ -12,6 +12,7 @@ urlpatterns = [
     url(r'^login/$', views.Login.as_view(), name="login"),
     url(r'^sent_analyser/$', views.SentAnalyser.as_view(), name="sent_analyser"),
     url(r'^social_login/$', views.SocialLogin.as_view(), name="social_login"),
+    url(r'^social_signup/$', views.SocialSignup.as_view(), name="social_login"),
     url(r'^extract_social/$', views.ExtractSocial.as_view(), name="social_login"),
 
     #url(r"^logout/$", views.Logout.as_view(), name="logout"),

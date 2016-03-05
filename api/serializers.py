@@ -58,7 +58,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases')
 
 
-class CreateUserProfileSerializer(serializers.Serializer):
+class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, write_only=True)
     email = serializers.CharField(required=True, write_only=True)
     password = serializers.CharField(required=True, write_only=True)
@@ -94,6 +94,13 @@ class CreateUserProfileSerializer(serializers.Serializer):
         user_profile = UserProfile.objects.create(**user_profile_data)
         user_profile.save()
         return user_profile
+
+
+class SocialSignupSerializer(serializers.ModelSerializer):
+    provider = serializers.CharField(required=True)
+
+    class Meta:
+        model = UserProfile
 
 
 class AccessTokenSerializer(serializers.ModelSerializer):
@@ -147,5 +154,3 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessToken
         fields = ('username', 'email', 'password')
-
-
