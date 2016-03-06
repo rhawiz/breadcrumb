@@ -52,3 +52,22 @@ class SocialAccount(models.Model):
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
 
 
+class UserContent(models.Model):
+    SOURCE_FACEBOOK = 'facebook'
+    SOURCE_TWITTER = 'twitter'
+    SOURCE_WEB = 'web'
+    SOURCE_CHOICES = (
+        (SOURCE_FACEBOOK, 'facebook'),
+        (SOURCE_TWITTER, 'twitter'),
+        (SOURCE_WEB, 'web'),
+    )
+
+    user = models.ForeignKey(UserProfile)
+    source = models.CharField(max_length=32, choices=SOURCE_CHOICES)
+    content = models.TextField(null=True)
+    url = models.CharField(max_length=255)
+    neg_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0)
+    pos_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0)
+    neut_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0)
+    sentiment_label = models.CharField(max_length=10, null=True)
+    extra_data = JSONField(null=True, blank=True)

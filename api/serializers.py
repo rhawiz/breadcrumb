@@ -20,6 +20,7 @@ class TestSerizalizer(serializers.ModelSerializer):
         fields = ('field1', 'field2')
 
 
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 

@@ -14,8 +14,6 @@ from operator import itemgetter
 
 # Create your views here.
 
-
-
 class run_deploy(APIView):
     def get(self, request, *args, **kwargs):
         import subprocess
