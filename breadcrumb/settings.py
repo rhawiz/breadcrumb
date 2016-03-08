@@ -85,8 +85,11 @@ WSGI_APPLICATION = 'breadcrumb.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
-ip = urlopen('http://ip.42.pl/raw').read()
+ip=None
+try:
+    ip = urlopen('http://ip.42.pl/raw', timeout=1).read()
+except Exception:
+    pass
 
 if ip == '104.155.75.17':
     DATABASES = {

@@ -162,8 +162,13 @@ class SocialLogin(APIView):
         return Response(data={})
 
 class SocialSignup(APIView):
+
     def post(self, request, *args, **kwargs):
-        pass
+        serializer = SocialSignupSerializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+
+        return Response(data=serializer.data)
 
 class ExtractSocial(APIView):
     def post(self, request, *args, **kwargs):
@@ -191,6 +196,7 @@ class ExtractSocial(APIView):
 
         user_feed_url = "https://graph.facebook.com/me?access_token={}&fields=feed.include_hidden(true)".format(
             access_token)
+
 
         user_feed_paginated = r.get(user_feed_url).json().get('feed')
 

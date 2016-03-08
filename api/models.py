@@ -16,7 +16,6 @@ class TestModel(models.Model):
     field2 = models.IntegerField(blank=True)
 
 
-
 class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, blank=False, null=False)
@@ -37,7 +36,6 @@ class UserProfile(models.Model):
         return self.user.username
 
 
-
 class SocialAccount(models.Model):
     PROVIDER_CHOICE_FACEBOOK = 'facebook'
     PROVIDER_CHOICE_TWITTER = 'twitter'
@@ -50,6 +48,18 @@ class SocialAccount(models.Model):
     social_id = models.CharField(max_length=255)
     social_token = models.CharField(max_length=255)
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
+
+    def _extract_facebook_content(self):
+        pass
+
+    def _extract_twitter_content(self):
+        pass
+
+    def extract_information(self):
+        if self.provider == self.PROVIDER_CHOICE_FACEBOOK:
+            self._extract_facebook_content()
+        if self.provider == self.PROVIDER_CHOICE_TWITTER:
+            self._extract_twitter_content()
 
 
 class UserContent(models.Model):
