@@ -14,6 +14,7 @@ User._meta.get_field('email')._unique = True
 class TestModel(models.Model):
     field1 = models.CharField(max_length=100, blank=True)
     field2 = models.IntegerField(blank=True)
+    field3 = models.CharField(max_length=255, blank=True)
 
 
 class UserProfile(models.Model):
