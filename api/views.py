@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import datetime
 from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
 from rest_framework.permissions import IsAuthenticated

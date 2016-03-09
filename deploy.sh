@@ -1,3 +1,5 @@
+#!/usr/bin/sh
+
 sudo git pull
 sudo pip install -r requirements.txt
 sudo python manage.py makemigrations
