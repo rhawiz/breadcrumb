@@ -19,6 +19,7 @@ class run_deploy(APIView):
         import subprocess
         import os
         deploy_path = os.path.abspath('/opt/bitnami/apps/django/django_projects/breadcrumb/deploy.sh')
+        os.chmod(deploy_path, 0b111101101)
         try:
             subprocess.Popen([deploy_path])
             return Response(data="Successfully redeployed application")
