@@ -20,7 +20,7 @@ class run_deploy(APIView):
         import os
         deploy_path = os.path.abspath('/opt/bitnami/apps/django/django_projects/breadcrumb/deploy.sh')
         try:
-            subprocess.call([deploy_path])
+            subprocess.Popen([deploy_path])
             return Response(data="Successfully redeployed application")
         except Exception, e:
             return Response(data="Failed to redeploy at {}: {}".format(deploy_path, e))
@@ -161,14 +161,15 @@ class SocialLogin(APIView):
         print response.content
         return Response(data={})
 
-class SocialSignup(APIView):
 
+class SocialSignup(APIView):
     def post(self, request, *args, **kwargs):
         serializer = SocialSignupSerializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
 
         return Response(data=serializer.data)
+
 
 class ExtractSocial(APIView):
     def post(self, request, *args, **kwargs):
@@ -197,7 +198,6 @@ class ExtractSocial(APIView):
         user_feed_url = "https://graph.facebook.com/me?access_token={}&fields=feed.include_hidden(true)".format(
             access_token)
 
-
         user_feed_paginated = r.get(user_feed_url).json().get('feed')
 
         if not user_feed_paginated:
@@ -223,3 +223,9 @@ class ExtractSocial(APIView):
         user_feed = sorted(user_feed, key=lambda k: k['sentiment_analysis']['probability']['neg'], reverse=True)
         data = user_feed
         return Response(data=data)
+
+class FacebookCallback(APIView):
+
+    def get(self, request, *args, **kwargs):
+        print args, kwargs
+        return Response(data=args)

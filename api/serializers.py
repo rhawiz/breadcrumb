@@ -3,7 +3,6 @@ from django.core.exceptions import MultipleObjectsReturned
 from oauth2_provider.models import Application, AccessToken
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, AuthenticationFailed
-
 from api.exceptions import *
 from rest_framework.exceptions import *
 from api.models import *
@@ -97,13 +96,12 @@ class SignupSerializer(serializers.Serializer):
         return user_profile
 
 
-class SocialSignupSerializer(serializers.ModelSerializer):
+class SocialSignupSerializer(serializers.Serializer):
     provider = serializers.CharField(required=True)
     social_token = serializers.CharField(required=True)
-    user = UserProfileSerializer(required=False)
 
     class Meta:
-        model = UserProfile
+        fields = ('provider', 'social_token')
 
     def create(self, validated_data):
 
@@ -123,23 +121,17 @@ class SocialSignupSerializer(serializers.ModelSerializer):
         client_id = '195217574177770'
         client_secret = 'd7c48a5db8ca2a126b71d487fd456817'
         fb_exchange_token = 'EAACxjKIpqZBoBABd2ETtO8qTMvy4W6ygVa9ZCH3e6HW5UXeLAZA8XJSLt1ZBXlFEouPXdQngtpxnkCTMyGTeSbRQd3t3aV6b24VVYX3MbsVz4oD4zTPojTQTc8ZCs7CY4xR9BiWmYbQ8FqMkR7msZAmidO3ke66onkYAjezaK0dQZDZD'
-
+        #https://www.facebook.com/dialog/oauth?client_id=195217574177770&redirect_uri=http://104.155.75.17/api/facebook_callback/
         fb_access_token_url = "https://graph.facebook.com/oauth/access_token?grant_type={}&client_id={}&client_secret={}&fb_exchange_token={}".format(
             grant_type, client_id, client_secret, fb_exchange_token)
 
-        # fb_access_token_response = r.get(fb_access_token_url).content
-        # access_token = fb_access_token_response.split('&')[0].split('=')[1]
-        # user_info_url = "https://graph.facebook.com/me?access_token={}&fields=id,name,email".format(access_token)
-        # user_info = r.get(user_info_url).json()
-        # social_id = user_info.get('id')
-        # fullname = user_info.get('name')
-        # email = user_info.get('email')
-
-        # todo: replace this with real response from facebook once i get internet
-
-        email = "testemail@email.com"
-        username = "testusername"
-        password = "testpassword"
+        fb_access_token_response = r.get(fb_access_token_url).content
+        access_token = fb_access_token_response.split('&')[0].split('=')[1]
+        user_info_url = "https://graph.facebook.com/me?access_token={}&fields=id,name,email".format(access_token)
+        user_info = r.get(user_info_url).json()
+        social_id = user_info.get('id')
+        fullname = user_info.get('name')
+        email = user_info.get('email')
 
         return {
             'email': email,

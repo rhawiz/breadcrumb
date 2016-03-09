@@ -55,7 +55,7 @@ class SocialAccount(models.Model):
     def _extract_twitter_content(self):
         pass
 
-    def extract_information(self):
+    def extract_content(self):
         if self.provider == self.PROVIDER_CHOICE_FACEBOOK:
             self._extract_facebook_content()
         if self.provider == self.PROVIDER_CHOICE_TWITTER:
@@ -67,12 +67,22 @@ class UserContent(models.Model):
     SOURCE_TWITTER = 'twitter'
     SOURCE_WEB = 'web'
     SOURCE_CHOICES = (
-        (SOURCE_FACEBOOK, 'facebook'),
-        (SOURCE_TWITTER, 'twitter'),
+        (SOURCE_FACEBOOK, 'Facebook'),
+        (SOURCE_TWITTER, 'Twitter'),
         (SOURCE_WEB, 'web'),
     )
 
+    TYPE_PHOTO = 'photo'
+    TYPE_TEXT = 'text'
+    TYPE_OTHER = 'other'
+    TYPE_CHOICES = (
+        (TYPE_PHOTO, 'Photo'),
+        (TYPE_TEXT, 'Text'),
+        (TYPE_OTHER, 'Other'),
+    )
+
     user = models.ForeignKey(UserProfile)
+    type = models.CharField(max_length=32, choices=TYPE_CHOICES)
     source = models.CharField(max_length=32, choices=SOURCE_CHOICES)
     content = models.TextField(null=True)
     url = models.CharField(max_length=255)
