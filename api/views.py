@@ -26,7 +26,7 @@ class run_deploy(APIView):
             subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "python manage.py makemigrations"])
             subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "python manage.py migrate"])
             subprocess.call(["/usr/bin/sudo", "/opt/bitnami/ctlscript.sh restart apache"])
-            s#ubprocess.call(["/usr/bin/sudo", deploy_path])
+            #subprocess.call(["/usr/bin/sudo", deploy_path])
 
             return Response(data="Successfully redeployed application")
         except Exception, e:
