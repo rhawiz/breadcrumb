@@ -19,7 +19,7 @@ class run_deploy(APIView):
         import subprocess
         import os
         deploy_path = os.path.abspath('/opt/bitnami/apps/django/django_projects/breadcrumb/deploy.sh')
-        os.chmod(deploy_path, 0b111101101)
+        subprocess.call(["/usr/bin/sudo", "chmod 755 {}".format(deploy_path)])
         try:
             subprocess.Popen([deploy_path])
             return Response(data="Successfully redeployed application")
@@ -225,8 +225,8 @@ class ExtractSocial(APIView):
         data = user_feed
         return Response(data=data)
 
-class FacebookCallback(APIView):
 
+class FacebookCallback(APIView):
     def get(self, request, *args, **kwargs):
         print args, kwargs
         return Response(data=args)
