@@ -21,7 +21,13 @@ class run_deploy(APIView):
         deploy_path = os.path.abspath('/opt/bitnami/apps/django/django_projects/breadcrumb/deploy.sh')
         subprocess.call(["/usr/bin/sudo", "chmod 755 {}".format(deploy_path)])
         try:
-            subprocess.call(["/usr/bin/sudo", deploy_path])
+            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "git pull"])
+            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "pip install -r requirements.txt"])
+            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "python manage.py makemigrations"])
+            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "python manage.py migrate"])
+            subprocess.call(["/usr/bin/sudo", "/opt/bitnami/ctlscript.sh restart apache"])
+            s#ubprocess.call(["/usr/bin/sudo", deploy_path])
+
             return Response(data="Successfully redeployed application")
         except Exception, e:
             return Response(data="Failed to redeploy at {}: {}".format(deploy_path, e))
