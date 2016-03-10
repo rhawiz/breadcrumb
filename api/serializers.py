@@ -112,7 +112,9 @@ class FacebookLoginSerializer(serializers.Serializer):
 
         user_info_url = "https://graph.facebook.com/v2.5/me?access_token={}&fields=id,name,email,gender".format(
             access_token)
+
         user_info_response = r.get(user_info_url).json()
+        print user_info_response
         fb_id = user_info_response.get('id')
         fullname = user_info_response.get('name')
         email = user_info_response.get('email')
@@ -172,7 +174,9 @@ class FacebookLoginSerializer(serializers.Serializer):
 
         fb_access_token_response = r.get(fb_token_url)
 
+
         fb_access_token_response_parts = urlparse.parse_qsl(fb_access_token_response.content)
+
         fb_access_token = None
 
         for part in fb_access_token_response_parts:
