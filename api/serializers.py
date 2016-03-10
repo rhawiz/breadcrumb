@@ -174,7 +174,6 @@ class FacebookLoginSerializer(serializers.Serializer):
 
         fb_access_token_response = r.get(fb_token_url)
 
-
         fb_access_token_response_parts = urlparse.parse_qsl(fb_access_token_response.content)
 
         fb_access_token = None

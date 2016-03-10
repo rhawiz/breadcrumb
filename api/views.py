@@ -37,6 +37,24 @@ class run_deploy(APIView):
             return Response(data="Failed to redeploy at {}: {}".format(deploy_path, e))
 
 
+class Search(APIView):
+    def get(self, request, *args, **kwargs):
+        pass
+        # search_text = kwargs.get('search_text', None)
+        # try:
+        #     gs = GoogleSearch(search_text)
+        #     gs.results_per_page = 25
+        #     results = gs.get_results()
+        #     for res in results:
+        #         print res.title.encode("utf8")
+        #         print res.desc.encode("utf8")
+        #         print res.url.encode("utf8")
+        #     print results
+        #     return Response(data=results)
+        # except SearchError, e:
+        #     return Response(data="Search failed: {}".format(e))
+
+
 class TestView(APIView):
     def get(self, request, *args, **kwargs):
         test_data = [

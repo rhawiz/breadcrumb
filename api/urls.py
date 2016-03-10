@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^social_signup/$', views.SocialSignup.as_view(), name="social_signup"),
     url(r'^extract_social/$', views.ExtractSocial.as_view(), name="extract_social "),
     url(r'^facebook_callback/', views.FacebookCallback.as_view(), name="facebook_callback"),
+    url(r'^search/(?P<search_text>.+)/$', views.Search.as_view(), name="search"),
 
     #url(r"^logout/$", views.Logout.as_view(), name="logout"),
 
