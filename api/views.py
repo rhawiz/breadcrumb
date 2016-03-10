@@ -10,6 +10,7 @@ from api.serializers import *
 import breadcrumb_intellegence.sentiment_analyser as sa
 import requests as r
 from operator import itemgetter
+import urlparse
 
 
 # Create your views here.
@@ -22,11 +23,14 @@ class run_deploy(APIView):
         subprocess.call(["/usr/bin/sudo", "chmod 755 {}".format(deploy_path)])
         try:
             subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "git pull"])
-            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "pip install -r requirements.txt"])
-            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "python manage.py makemigrations"])
-            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/", "python manage.py migrate"])
+            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/",
+                             "pip install -r requirements.txt"])
+            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/",
+                             "python manage.py makemigrations"])
+            subprocess.call(["/usr/bin/sudo", "cd /opt/bitnami/apps/django/django_projects/breadcrumb/",
+                             "python manage.py migrate"])
             subprocess.call(["/usr/bin/sudo", "/opt/bitnami/ctlscript.sh restart apache"])
-            #subprocess.call(["/usr/bin/sudo", deploy_path])
+            # subprocess.call(["/usr/bin/sudo", deploy_path])
 
             return Response(data="Successfully redeployed application")
         except Exception, e:
@@ -171,7 +175,7 @@ class SocialLogin(APIView):
 
 class SocialSignup(APIView):
     def post(self, request, *args, **kwargs):
-        serializer = SocialSignupSerializer(data=request.data)
+        serializer = FacebookLoginSerializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
 
@@ -234,5 +238,9 @@ class ExtractSocial(APIView):
 
 class FacebookCallback(APIView):
     def get(self, request, *args, **kwargs):
-        print args, kwargs
-        return Response(data=args)
+        code = request.GET.get('code', None)
+        data = {'code': code}
+        serializer = FacebookLoginSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        print serializer.save()
+        return Response(data=serializer.data)

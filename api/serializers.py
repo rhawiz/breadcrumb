@@ -1,3 +1,6 @@
+import urlparse
+
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.exceptions import MultipleObjectsReturned
 from oauth2_provider.models import Application, AccessToken
@@ -96,49 +99,65 @@ class SignupSerializer(serializers.Serializer):
         return user_profile
 
 
-class SocialSignupSerializer(serializers.Serializer):
-    provider = serializers.CharField(required=True)
-    social_token = serializers.CharField(required=True)
+class FacebookLoginSerializer(serializers.Serializer):
+    code = serializers.CharField(required=True)
 
     class Meta:
-        fields = ('provider', 'social_token')
+        fields = ('code')
 
     def create(self, validated_data):
+        access_token = validated_data.get('access_token', None)
 
-        return validated_data
+        user_info_url = "https://graph.facebook.com/v2.5/me?access_token={}&fields=id,name,email,gender".format(
+            access_token)
+        user_info_response = r.get(user_info_url).json()
+        fb_id = user_info_response.get('id')
+        fullname = user_info_response.get('name')
+        email = user_info_response.get('email')
+
+        try:
+            social_account = SocialAccount.objects.get(provider='facebook', social_id=fb_id)
+        except SocialAccount.DoesNotExist:
+            #todo: Create social account and user here
+            pass
+
+        self._data = user_info_response
+        return {}
 
     def validate(self, data):
+        code = data.get('code', None)
+        client_id = getattr(settings, "FACEBOOK_CLIENT_ID", None)
+        client_secret = getattr(settings, "FACEBOOK_CLIENT_SECRET", None)
+        callback_url = getattr(settings, "FACEBOOK_CALLBACK_URL", None)
 
-        provider = data.get('provider', None)
-        social_token = data.get('social_token', None)
+        if not client_id:
+            raise ValidationError(detail={'client_id': 'Cannot find FACEBOOK_CLIENT_ID in django settings'})
 
-        if not provider:
-            raise ValidationError(detail={'provider': 'This field is required.'})
-        if not social_token:
-            raise ValidationError(detail={'social_token': 'This field is required.'})
+        if not client_secret:
+            raise ValidationError(detail={'client_secret': 'Cannot find FACEBOOK_CLIENT_SECRET in django settings'})
 
-        grant_type = 'fb_exchange_token'
-        client_id = '195217574177770'
-        client_secret = 'd7c48a5db8ca2a126b71d487fd456817'
-        fb_exchange_token = 'EAACxjKIpqZBoBABd2ETtO8qTMvy4W6ygVa9ZCH3e6HW5UXeLAZA8XJSLt1ZBXlFEouPXdQngtpxnkCTMyGTeSbRQd3t3aV6b24VVYX3MbsVz4oD4zTPojTQTc8ZCs7CY4xR9BiWmYbQ8FqMkR7msZAmidO3ke66onkYAjezaK0dQZDZD'
-        #https://www.facebook.com/dialog/oauth?client_id=195217574177770&redirect_uri=http://104.155.75.17/api/facebook_callback/
-        fb_access_token_url = "https://graph.facebook.com/oauth/access_token?grant_type={}&client_id={}&client_secret={}&fb_exchange_token={}".format(
-            grant_type, client_id, client_secret, fb_exchange_token)
+        if not callback_url:
+            raise ValidationError(detail={'callback_url': 'Cannot find FACEBOOK_CALLBACK_URL in django settings'})
 
-        fb_access_token_response = r.get(fb_access_token_url).content
-        access_token = fb_access_token_response.split('&')[0].split('=')[1]
-        user_info_url = "https://graph.facebook.com/me?access_token={}&fields=id,name,email".format(access_token)
-        user_info = r.get(user_info_url).json()
-        social_id = user_info.get('id')
-        fullname = user_info.get('name')
-        email = user_info.get('email')
+        if not code:
+            raise ValidationError(detail={'code': 'This field is required.'})
 
-        return {
-            'email': email,
-            'username': username,
-            'password': password
+        fb_token_url = "https://graph.facebook.com/oauth/access_token?code={}&client_id={}&client_secret={}&redirect_uri={}".format(
+            code, client_id, client_secret, callback_url)
 
-        }
+        fb_access_token_response = r.get(fb_token_url)
+
+        fb_access_token_response_parts = urlparse.parse_qsl(fb_access_token_response.content)
+        fb_access_token = None
+
+        for part in fb_access_token_response_parts:
+            if part[0] == 'access_token':
+                fb_access_token = part[1]
+
+        if not fb_access_token:
+            raise ValidationError(detail={'access_token': 'Could not retrieve Facebook access token'})
+
+        return {'access_token': fb_access_token}
 
 
 class AccessTokenSerializer(serializers.ModelSerializer):

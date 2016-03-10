@@ -140,6 +140,10 @@ USE_L10N = True
 
 USE_TZ = True
 
+FACEBOOK_CLIENT_ID = '195217574177770'
+FACEBOOK_CLIENT_SECRET = 'd7c48a5db8ca2a126b71d487fd456817'
+FACEBOOK_CALLBACK_URL = "http://localhost:8080/api/facebook_callback/"
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
