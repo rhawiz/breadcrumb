@@ -43,7 +43,7 @@ class SocialAccount(models.Model):
         (PROVIDER_CHOICE_TWITTER, 'twitter'),
     )
 
-    user = models.ForeignKey(UserProfile)
+    user_profile = models.ForeignKey(UserProfile)
     social_id = models.CharField(max_length=255)
     social_token = models.CharField(max_length=255)
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)

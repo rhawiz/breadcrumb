@@ -67,6 +67,8 @@ class SignupSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
     first_name = serializers.CharField(required=False, write_only=True)
     last_name = serializers.CharField(required=False, write_only=True)
+    fullname = serializers.CharField(required=False, write_only=True)
+    gender = serializers.IntegerField(required=False, write_only=True)
     aliases = serializers.JSONField(required=False)
 
     class Meta:
@@ -114,15 +116,38 @@ class FacebookLoginSerializer(serializers.Serializer):
         fb_id = user_info_response.get('id')
         fullname = user_info_response.get('name')
         email = user_info_response.get('email')
+        gender = user_info_response.get('gender')
 
+        gender_id = 0
+        if gender == 'male':
+            gender_id = 1
+        elif gender == 'female':
+            gender_id = 2
+
+        social_account = None
         try:
             social_account = SocialAccount.objects.get(provider='facebook', social_id=fb_id)
         except SocialAccount.DoesNotExist:
-            #todo: Create social account and user here
-            pass
+            user_profile_data = {
+                'username': email,
+                'email': email,
+                'password': uuid.uuid4(),
+                'fullname': fullname,
+                'gender': gender_id
+            }
+            user_profile_serializer = SignupSerializer(data=user_profile_data)
+            user_profile_serializer.is_valid(raise_exception=True)
+            user_profile = user_profile_serializer.save()
+            social_account = SocialAccount.objects.create(user_profile=user_profile, social_id=fb_id,
+                                                          social_token=access_token,
+                                                          provider='facebook')
 
-        self._data = user_info_response
-        return {}
+        user_profile = social_account.user_profile
+        access_token = generate_access_token(user_profile.user)
+
+        access_token_data = AccessTokenSerializer(access_token).data
+        self._data = access_token_data
+        return user_profile
 
     def validate(self, data):
         code = data.get('code', None)
@@ -174,7 +199,7 @@ class AccessTokenSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False)
-    password = serializers.CharField(required=False)
+    password = serializers.CharField(required=True)
     email = serializers.CharField(required=False)
 
     def create(self, validated_data):
@@ -184,7 +209,8 @@ class LoginSerializer(serializers.ModelSerializer):
         user_data = UserSerializer(user).data
         access_token_data = AccessTokenSerializer(access_token).data
         self._data = {
-            "access_token": access_token_data
+            "access_token": access_token_data,
+            'user': user_data,
         }
 
         return access_token
