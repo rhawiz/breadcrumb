@@ -34,6 +34,20 @@ class run_deploy(APIView):
 
 
 class Search(APIView):
+    def get(self, request, *args, **kwargs):
+
+        search_text = kwargs.get('search_text', None)
+
+
+        num = 50
+        pages = 1
+
+        google_search = GoogleSearch(query=search_text, num=num, sentiment_analyser=sa)
+        results = google_search.search(pages=pages)
+
+        results = sorted(results, key=lambda k: k['analysis']['probability']['neg'], reverse=True)
+
+        return Response(data=results)
     def post(self, request, *args, **kwargs):
 
         search_text = kwargs.get('search_text', None)
