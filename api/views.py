@@ -1,16 +1,12 @@
-import datetime
 from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework import generics
 from rest_framework.views import APIView
-from oauth2_provider.models import AccessToken, Application
+
+from breadcrumb_intellegence.ai.sentimentanalyser import analyse_text as sa
 from api.serializers import *
-import breadcrumb_intellegence.sentiment_analyser as sa
-import requests as r
-from operator import itemgetter
-import urlparse
+from breadcrumb_intellegence.websearch.google import GoogleSearch
 
 
 # Create your views here.
@@ -38,21 +34,29 @@ class run_deploy(APIView):
 
 
 class Search(APIView):
-    def get(self, request, *args, **kwargs):
-        pass
-        # search_text = kwargs.get('search_text', None)
-        # try:
-        #     gs = GoogleSearch(search_text)
-        #     gs.results_per_page = 25
-        #     results = gs.get_results()
-        #     for res in results:
-        #         print res.title.encode("utf8")
-        #         print res.desc.encode("utf8")
-        #         print res.url.encode("utf8")
-        #     print results
-        #     return Response(data=results)
-        # except SearchError, e:
-        #     return Response(data="Search failed: {}".format(e))
+    def post(self, request, *args, **kwargs):
+
+        search_text = kwargs.get('search_text', None)
+
+        if not search_text:
+            return Response(data=['Provide search text'])
+
+
+        num = request.data.get('num', None)
+        pages = request.data.get('pages', None)
+
+        if not num:
+            num = 50
+        if not pages:
+            pages = 1
+
+        google_search = GoogleSearch(query=search_text, num=num, sentiment_analyser=sa)
+        results = google_search.search(pages=pages)
+
+        results = sorted(results, key=lambda k: k['analysis']['probability']['neg'], reverse=True)
+
+        return Response(data=results)
+
 
 
 class TestView(APIView):
@@ -163,7 +167,7 @@ class SentAnalyser(APIView):
         if not text:
             return Response(data={"text": ["This field is required."]})
 
-        data = sa.analyse_text(text)
+        data = sa(text)
         print data
 
         return Response(data=data)
