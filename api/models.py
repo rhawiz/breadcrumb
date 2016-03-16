@@ -31,6 +31,15 @@ class UserProfile(models.Model):
 
     aliases = JSONField(null=True, blank=True)
 
+    def crawl_facebook_content(self):
+        pass
+
+    def crawl_twitter_content(self):
+        pass
+
+    def crawl_web_content(self):
+        pass
+
     def __unicode__(self):
         return self.user.username
 
@@ -48,17 +57,8 @@ class SocialAccount(models.Model):
     social_token = models.CharField(max_length=255)
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
 
-    def _extract_facebook_content(self):
-        pass
-
-    def _extract_twitter_content(self):
-        pass
-
-    def extract_content(self):
-        if self.provider == self.PROVIDER_CHOICE_FACEBOOK:
-            self._extract_facebook_content()
-        if self.provider == self.PROVIDER_CHOICE_TWITTER:
-            self._extract_twitter_content()
+    def __unicode__(self):
+        return "{} ({})".format(self.user_profile.user.username, self.provider)
 
 
 class UserContent(models.Model):

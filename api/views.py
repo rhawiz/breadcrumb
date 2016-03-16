@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from breadcrumb_intellegence.ai.sentimentanalyser import analyse_text as sa
 from api.serializers import *
-from breadcrumb_intellegence.websearch.google import GoogleSearch
+from breadcrumb_intellegence.searchengines.google_search import GoogleSearch
 
 
 # Create your views here.
@@ -37,8 +37,6 @@ class Search(APIView):
     def get(self, request, *args, **kwargs):
 
         search_text = kwargs.get('search_text', None)
-
-
         num = 50
         pages = 1
 

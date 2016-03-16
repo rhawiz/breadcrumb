@@ -5,8 +5,26 @@ from bs4 import BeautifulSoup
 
 from api.utils import is_ascii
 
-GOOGLE_BASE_SEARCH_URL = "https://www.google.co.uk/search?q={}&start={}&num={}"
+GOOGLE_WEB_SEARCH_URL = "https://www.google.com/search?q={}&start={}&num={}"
 
+"""
+    Google Image Search URL usage
+    Example URL: https://www.google.co.uk/search?q=SEARCH_QUERY&safe=off&nfpr=1&tbs=cdr:1,cd_min:01/03/2016,cd_max:10/03/2016,itp:face&tbm=isch
+    ----Relevant Parameters----
+    q: Search Query
+    tbs: Filters
+        cdr:1 : Add time range filter
+            cd_min: Min Date
+            cd_max: Max Date
+        itp: Search Type
+            face: Face Photos
+            photo: Photograps
+            clipart: Drawings
+            linedrawing: Line drawings
+            animated: GIFS
+
+"""
+GOOGLE_IMAGE_SEARCH_URL = "https://www.google.co.uk/search?tbm=isch&q=SEARCH_QUERY&safe=off&nfpr=1&tbs=cdr:1,cd_min:{MIN_DATE},cd_max:10/03/2016,itp:{}"
 
 class GoogleSearch:
     def __init__(self, query, wait=1, start=0, num=100, sentiment_analyser=None):
@@ -23,7 +41,7 @@ class GoogleSearch:
             query = self.query
             start = self.start + (i * self.num)
             num = self.num
-            url = GOOGLE_BASE_SEARCH_URL.format(query, start, num)
+            url = GOOGLE_WEB_SEARCH_URL.format(query, start, num)
             html_response = requests.get(url).text
             content = self._scrape_page(html_response)
             if not len(content):
@@ -54,16 +72,18 @@ class GoogleSearch:
                 pass
             content_analysis = None
 
+            content = {
+                'url': link_url,
+                'url_text': link_text,
+                'text': short_text
+            }
+
             if self.sentiment_analyser:
                 try:
                     content_analysis = self.sentiment_analyser(short_text)
+                    content['analysis'] = content_analysis
                 except Exception:
                     pass
-
-            content = {'url': link_url,
-                       'url_text': link_text,
-                       'text': short_text,
-                       'analysis': content_analysis}
 
             results.append(content)
 

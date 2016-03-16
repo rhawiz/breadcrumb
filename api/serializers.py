@@ -114,7 +114,6 @@ class FacebookLoginSerializer(serializers.Serializer):
             access_token)
 
         user_info_response = r.get(user_info_url).json()
-        print user_info_response
         fb_id = user_info_response.get('id')
         fullname = user_info_response.get('name')
         email = user_info_response.get('email')
