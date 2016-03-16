@@ -246,7 +246,8 @@ class ExtractSocial(APIView):
         user_feed_paginated = r.get(user_feed_url).json().get('feed')
 
         if not user_feed_paginated:
-            return Response(data={'Error': 'Invalid Access Token: {}'.format(access_token)})
+            return Response(data={'Error': 'Invalid Access Token: {}'.format(access_token),
+                                  'facebook_response':r.get(user_feed_url).json()})
         all_user_feed = user_feed_paginated.get('data')
 
         while user_feed_paginated:
