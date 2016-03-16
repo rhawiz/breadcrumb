@@ -263,7 +263,7 @@ class ExtractSocial(APIView):
                 user_feed.append(content)
 
         for content in user_feed:
-            sent_dict = sa.analyse_text(content.get('message'))
+            sent_dict = sa(content.get('message'))
             content['sentiment_analysis'] = sent_dict
         user_feed = sorted(user_feed, key=lambda k: k['sentiment_analysis']['probability']['neg'], reverse=True)
         data = user_feed
