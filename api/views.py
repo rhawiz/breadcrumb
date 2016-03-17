@@ -258,13 +258,13 @@ class ExtractSocial(APIView):
                 user_feed_paginated = None
         user_feed = []
 
-        for content in all_user_feed:
-            if 'message' in content:
-                user_feed.append(content)
+        for feed in all_user_feed:
+            if 'message' in feed:
+                user_feed.append(feed)
 
-        for content in user_feed:
-            sent_dict = sa(content.get('message'))
-            content['sentiment_analysis'] = sent_dict
+        for feed in user_feed:
+            sent_dict = sa(feed.get('message'))
+            feed['sentiment_analysis'] = sent_dict
         user_feed = sorted(user_feed, key=lambda k: k['sentiment_analysis']['probability']['neg'], reverse=True)
         data = user_feed
         return Response(data=data)
