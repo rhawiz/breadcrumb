@@ -1,6 +1,6 @@
 import requests
 
-from api.utils import is_ascii
+from breadcrumb_intellegence.utils import is_ascii
 
 url = 'http://text-processing.com/api/sentiment/'
 
