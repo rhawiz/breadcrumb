@@ -15,6 +15,7 @@ class TestModel(models.Model):
     field1 = models.CharField(max_length=100, blank=True)
     field2 = models.IntegerField(blank=True)
 
+
 class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, blank=False, null=False)

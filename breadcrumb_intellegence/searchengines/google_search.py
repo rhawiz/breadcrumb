@@ -3,7 +3,7 @@ from time import sleep
 import requests
 from bs4 import BeautifulSoup
 
-from api.utils import is_ascii
+from breadcrumb_intellegence.utils import is_ascii
 
 GOOGLE_WEB_SEARCH_URL = "https://www.google.com/search?q={}&start={}&num={}"
 
@@ -26,7 +26,8 @@ GOOGLE_WEB_SEARCH_URL = "https://www.google.com/search?q={}&start={}&num={}"
 """
 GOOGLE_IMAGE_SEARCH_URL = "https://www.google.co.uk/search?tbm=isch&q=SEARCH_QUERY&safe=off&nfpr=1&tbs=cdr:1,cd_min:{MIN_DATE},cd_max:10/03/2016,itp:{}"
 
-class GoogleSearch:
+
+class GoogleWebSearch:
     def __init__(self, query, wait=1, start=0, num=100, sentiment_analyser=None):
         self.query = query
         self.wait = wait

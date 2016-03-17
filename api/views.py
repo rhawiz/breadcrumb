@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from breadcrumb_intellegence.ai.sentimentanalyser import analyse_text as sa
 from api.serializers import *
-from breadcrumb_intellegence.searchengines.google_search import GoogleSearch
+from breadcrumb_intellegence.searchengines.google_search import GoogleWebSearch
 
 
 # Create your views here.
@@ -40,7 +40,7 @@ class Search(APIView):
         num = 50
         pages = 1
 
-        google_search = GoogleSearch(query=search_text, num=num, sentiment_analyser=sa)
+        google_search = GoogleWebSearch(query=search_text, num=num, sentiment_analyser=sa)
         results = google_search.search(pages=pages)
 
         results = sorted(results, key=lambda k: k['analysis']['probability']['neg'], reverse=True)
@@ -62,7 +62,7 @@ class Search(APIView):
         if not pages:
             pages = 1
 
-        google_search = GoogleSearch(query=search_text, num=num, sentiment_analyser=sa)
+        google_search = GoogleWebSearch(query=search_text, num=num, sentiment_analyser=sa)
         results = google_search.search(pages=pages)
 
         results = sorted(results, key=lambda k: k['analysis']['probability']['neg'], reverse=True)
@@ -228,11 +228,10 @@ class ExtractSocial(APIView):
 
         fb_access_token_response = r.get(fb_access_token_url).content
         # access_token = fb_access_token_response.split('&')[0].split('=')[1]
-
         if 'access_token' in request.data:
             access_token = request.data.get('access_token')
         else:
-            access_token = 'EAACxjKIpqZBoBAIrwnP4rWovBr6dZBy9BZAiyTDVgQRZAZCYKI2cXZBUilh0VgRICRvWxeken2NJfYdBuulqyKFVPUkx6KTS4mlOltsuPDYNYNALw58gPvk7gPwZCS3WZA3mZAH8ALyLGuSX6pWmzYcU4pceTa0fgHkOErQjwZCs9w0wZDZD'
+            access_token = 'CAACxjKIpqZBoBAF8GtPCw0KepR4QhFCRbqjRwisd8f6qpy1yCBOJCn5ZB3AV2lGrZAlyzTrIsxC5H4xBHZCn9OEZB4vqQA4ZBv2rVZAm6ybf8Rf9HLpZASqZBeYZC8J7ug1d44mGe5OojOQUMCNU7YYOZCZARfAATn37kBTz9ZC83scZBp0NkkATKGDSMHPqFBsB8ZAgP0ZBqQHUhci6ZAabZCTUD4L4N5'
         # expires = fb_access_token_response.split('&')[1].split('=')[1]
 
         ts_now = time.time()
@@ -247,6 +246,7 @@ class ExtractSocial(APIView):
 
         if not user_feed_paginated:
             return Response(data={'Error': 'Invalid Access Token: {}'.format(access_token)})
+
         all_user_feed = user_feed_paginated.get('data')
 
         while user_feed_paginated:
