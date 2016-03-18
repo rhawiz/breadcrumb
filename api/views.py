@@ -4,12 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from breadcrumb_intellegence.ai.sentimentanalyser import analyse_text as sa
+from breadcrumbcore.ai.sentimentanalyser import analyse_text as sa
 from api.serializers import *
-from breadcrumb_intellegence.searchengines.google_search import GoogleSearch
-
+from breadcrumbcore.searchengines.googlesearch import GoogleWebSearch
 
 # Create your views here.
+from api.utils import get_user_profile_from_token
+
 
 class run_deploy(APIView):
     def get(self, request, *args, **kwargs):
@@ -40,19 +41,19 @@ class Search(APIView):
         num = 50
         pages = 1
 
-        google_search = GoogleSearch(query=search_text, num=num, sentiment_analyser=sa)
+        google_search = GoogleWebSearch(query=search_text, num=num, sentiment_analyser=sa)
         results = google_search.search(pages=pages)
 
         results = sorted(results, key=lambda k: k['analysis']['probability']['neg'], reverse=True)
 
         return Response(data=results)
+
     def post(self, request, *args, **kwargs):
 
         search_text = kwargs.get('search_text', None)
 
         if not search_text:
             return Response(data=['Provide search text'])
-
 
         num = request.data.get('num', None)
         pages = request.data.get('pages', None)
@@ -62,13 +63,12 @@ class Search(APIView):
         if not pages:
             pages = 1
 
-        google_search = GoogleSearch(query=search_text, num=num, sentiment_analyser=sa)
+        google_search = GoogleWebSearch(query=search_text, num=num, sentiment_analyser=sa)
         results = google_search.search(pages=pages)
 
         results = sorted(results, key=lambda k: k['analysis']['probability']['neg'], reverse=True)
 
         return Response(data=results)
-
 
 
 class TestView(APIView):
@@ -144,6 +144,27 @@ class UserProfileList(generics.ListAPIView):
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class Scan(APIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def post(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        user_profile = get_user_profile_from_token(token)
+
+        wcp = Process(target=user_profile._scan_web_content())
+        fbcp = Process(target=user_profile._scan_facebook_content())
+        tcp = Process(target=user_profile._scan_twitter_content())
+
+        wcp.start()
+        fbcp.start()
+        tcp.start()
+        
+        return Response(status=status.HTTP_200_OK)
 
 
 class Signup(generics.CreateAPIView):
@@ -247,7 +268,7 @@ class ExtractSocial(APIView):
 
         if not user_feed_paginated:
             return Response(data={'Error': 'Invalid Access Token: {}'.format(access_token),
-                                  'facebook_response':r.get(user_feed_url).json()})
+                                  'facebook_response': r.get(user_feed_url).json()})
         all_user_feed = user_feed_paginated.get('data')
 
         while user_feed_paginated:

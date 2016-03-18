@@ -1,3 +1,10 @@
+import datetime
+import json
+
+import thread
+from multiprocessing import Process
+
+from breadcrumbcore.contentcollectors.webcollector import WebCollector
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
@@ -7,6 +14,9 @@ from django.db.models import signals
 from jsonfield import JSONField
 
 from django.contrib.auth.models import User
+from breadcrumbcore.contentcollectors import webcollector, facebookcollector
+from breadcrumbcore.ai import sentimentanalyser
+from breadcrumbcore.utils.utils import get_hash8, random_hash8
 
 User._meta.get_field('email')._unique = True
 
@@ -14,6 +24,7 @@ User._meta.get_field('email')._unique = True
 class TestModel(models.Model):
     field1 = models.CharField(max_length=100, blank=True)
     field2 = models.IntegerField(blank=True)
+
 
 class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -31,14 +42,60 @@ class UserProfile(models.Model):
 
     aliases = JSONField(null=True, blank=True)
 
-    def crawl_facebook_content(self):
-        pass
+    web_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
+    facebook_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
+    twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
 
-    def crawl_twitter_content(self):
-        pass
+    def scan_all_content(self):
+        wcp = Process(target=self._scan_web_content())
+        fbcp = Process(target=self._scan_facebook_content())
+        tcp = Process(target=self._scan_twitter_content())
 
-    def crawl_web_content(self):
-        pass
+        wcp.start()
+        fbcp.start()
+        tcp.start()
+
+    def _scan_facebook_content(self):
+        print "Facebook scan complete todo: Push notifications"
+
+    def _scan_twitter_content(self):
+        print "Twitter scan complete todo: Push notifications"
+
+    def _scan_web_content(self):
+        search_content = self.aliases
+        first_name = self.user.first_name
+        last_name = self.user.last_name
+
+        if first_name and last_name:
+            search_content.append("{} {}".format(first_name, last_name))
+
+        wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=50)
+        print search_content
+        user_web_content = wc.run()
+        print user_web_content
+        for user_content in user_web_content:
+            user = self
+            type = 'text'
+            source = 'web'
+            content = user_content.get('short_text', None)
+            url = user_content.get('url', None)
+            hashed_url = get_hash8(url)
+            sentiment_analysis = user_content.get('analysis', None)
+            neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+            pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+            neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+            sentiment_label = sentiment_analysis.get('label')
+            extra_data = json.dumps(user_content.get('relevant_content'))
+
+            try:
+                UserContent.objects.create(
+                    user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data
+                )
+            except Exception, e:
+                print e
+        print "Web scan complete todo: Push notifications"
 
     def __unicode__(self):
         return self.user.username
@@ -85,8 +142,11 @@ class UserContent(models.Model):
     source = models.CharField(max_length=32, choices=SOURCE_CHOICES)
     content = models.TextField(null=True)
     url = models.CharField(max_length=255)
+    hashed_url = models.CharField(unique=True, max_length=32, default=random_hash8())
     neg_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0, max_digits=3)
     pos_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0, max_digits=3)
     neut_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0, max_digits=3)
     sentiment_label = models.CharField(max_length=10, null=True)
     extra_data = JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
