@@ -5,4 +5,4 @@ django-cors-headers==1.1.0
 djangorestframework==3.3.2
 MySQL-python==1.2.5
 beautifulsoup4==4.4.1
-git+git://github.com/rhawiz/breadcrumbcore.git==0.0.1
+git+ssh://git@github.com:rhawiz/breadcrumbcore.git
