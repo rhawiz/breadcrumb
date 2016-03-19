@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'breadcrumb.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-ip=None
+ip = None
 try:
     ip = urlopen('http://ip.42.pl/raw', timeout=1).read()
 except Exception:
@@ -96,6 +96,11 @@ FACEBOOK_CLIENT_SECRET = 'd7c48a5db8ca2a126b71d487fd456817'
 
 if ip == '104.155.75.17':
     FACEBOOK_CALLBACK_URL = "http://104.155.75.17/api/facebook_callback/"
+    BROKER_URL = 'redis://localhost:6379'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+    CELERY_ACCEPT_CONTENT = ['application/json']
+    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_RESULT_SERIALIZER = 'json'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -108,6 +113,11 @@ if ip == '104.155.75.17':
     }
 else:
     FACEBOOK_CALLBACK_URL = "http://localhost:8080/api/facebook_callback/"
+    BROKER_URL = 'redis://localhost:6379'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+    CELERY_ACCEPT_CONTENT = ['application/json']
+    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_RESULT_SERIALIZER = 'json'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -118,7 +128,6 @@ else:
             'PORT': '3306',
         }
     }
-
 
 AUTHENTICATION_BACKENDS = (
     'oauth2_provider.backends.OAuth2Backend',
@@ -144,7 +153,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/

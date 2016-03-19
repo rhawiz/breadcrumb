@@ -47,13 +47,9 @@ class UserProfile(models.Model):
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
 
     def scan_all_content(self):
-        wcp = Process(target=self._scan_web_content())
-        fbcp = Process(target=self._scan_facebook_content())
-        tcp = Process(target=self._scan_twitter_content())
-
-        wcp.start()
-        fbcp.start()
-        tcp.start()
+        self._scan_facebook_content()
+        self._scan_twitter_content()
+        self._scan_web_content()
 
     def _scan_facebook_content(self):
         print "Facebook scan complete todo: Push notifications"

@@ -10,6 +10,7 @@ from breadcrumbcore.searchengines.googlesearch import GoogleWebSearch
 
 # Create your views here.
 from api.utils import get_user_profile_from_token
+from api.tasks import scan_user_content
 
 
 class run_deploy(APIView):
@@ -155,15 +156,7 @@ class Scan(APIView):
     def post(self, request, *args, **kwargs):
         token = request.META.get('HTTP_AUTHORIZATION', None)
         user_profile = get_user_profile_from_token(token)
-
-        wcp = Process(target=user_profile._scan_web_content())
-        fbcp = Process(target=user_profile._scan_facebook_content())
-        tcp = Process(target=user_profile._scan_twitter_content())
-
-        wcp.start()
-        fbcp.start()
-        tcp.start()
-        
+        scan_user_content(user_profile=user_profile)
         return Response(status=status.HTTP_200_OK)
 
 
