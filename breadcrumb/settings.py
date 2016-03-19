@@ -129,6 +129,8 @@ else:
         }
     }
 
+CELERY_IMPORTS = ("api.tasks", )
+
 AUTHENTICATION_BACKENDS = (
     'oauth2_provider.backends.OAuth2Backend',
     'django.contrib.auth.backends.ModelBackend',
