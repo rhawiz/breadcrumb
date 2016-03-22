@@ -1,3 +1,5 @@
+import pickle
+
 from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
@@ -156,7 +158,7 @@ class Scan(APIView):
     def post(self, request, *args, **kwargs):
         token = request.META.get('HTTP_AUTHORIZATION', None)
         user_profile = get_user_profile_from_token(token)
-        scan_user_content(user_profile)
+        scan_user_content.delay(str(user_profile.pk))
         return Response(status=status.HTTP_200_OK)
 
 

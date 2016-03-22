@@ -94,13 +94,10 @@ except Exception:
 FACEBOOK_CLIENT_ID = '195217574177770'
 FACEBOOK_CLIENT_SECRET = 'd7c48a5db8ca2a126b71d487fd456817'
 
+
+
 if ip == '104.155.75.17':
     FACEBOOK_CALLBACK_URL = "http://104.155.75.17/api/facebook_callback/"
-    BROKER_URL = 'redis://localhost:6379'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-    CELERY_ACCEPT_CONTENT = ['application/json']
-    CELERY_TASK_SERIALIZER = 'json'
-    CELERY_RESULT_SERIALIZER = 'json'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -113,11 +110,6 @@ if ip == '104.155.75.17':
     }
 else:
     FACEBOOK_CALLBACK_URL = "http://localhost:8080/api/facebook_callback/"
-    BROKER_URL = 'redis://localhost:6379'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-    CELERY_ACCEPT_CONTENT = ['application/json']
-    CELERY_TASK_SERIALIZER = 'json'
-    CELERY_RESULT_SERIALIZER = 'json'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -128,6 +120,12 @@ else:
             'PORT': '3306',
         }
     }
+
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 CELERY_IMPORTS = ("api.tasks", )
 

@@ -59,6 +59,8 @@ class UserProfile(models.Model):
 
     def _scan_web_content(self):
         search_content = self.aliases
+        if not search_content:
+            search_content = []
         first_name = self.user.first_name
         last_name = self.user.last_name
 
@@ -66,9 +68,7 @@ class UserProfile(models.Model):
             search_content.append("{} {}".format(first_name, last_name))
 
         wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=50)
-        print search_content
         user_web_content = wc.run()
-        print user_web_content
         for user_content in user_web_content:
             user = self
             type = 'text'

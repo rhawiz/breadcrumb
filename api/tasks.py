@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+
+import uuid
+from time import sleep
+
 from celery.utils.log import get_task_logger
 from celery import task, shared_task
 from api.models import UserProfile
@@ -6,12 +10,19 @@ logger = get_task_logger(__name__)
 from celery.result import AsyncResult
 
 
-@shared_task(name="scan_user_content")
-def scan_user_content(user_profile):
+@task(name="scan_user_content")
+def scan_user_content(user_profile_id):
+    print user_profile_id
+    try:
+        user_profile_uuid = uuid.UUID(user_profile_id).hex
+        print user_profile_uuid
+        user_profile = UserProfile.objects.get(pk=user_profile_uuid)
+    except UserProfile.DoesNotExist:
+        print "Invalid UserProfile id"
+        return None
     print user_profile
-    logger.info("Scanning User Contents")
     if isinstance(user_profile, UserProfile):
-        logger.info("Scanning User Contents")
+        print "Scanning user content..."
         user_profile.scan_all_content()
 
 
