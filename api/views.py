@@ -161,6 +161,18 @@ class Scan(APIView):
         scan_user_content.delay(str(user_profile.pk))
         return Response(status=status.HTTP_200_OK)
 
+class ScanTest(APIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def post(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        user_profile = get_user_profile_from_token(token)
+        user_profile._scan_facebook_content()
+        return Response(status=status.HTTP_200_OK)
+
 
 class Signup(generics.CreateAPIView):
     queryset = UserProfile.objects.all()

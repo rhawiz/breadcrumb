@@ -60,23 +60,35 @@ class UserProfile(models.Model):
         access_token = fb_account.social_token
         fc = FacebookCollector(access_token=access_token)
         facebook_content = fc.run()
-        for content in facebook_content:
+        for user_content in facebook_content:
+            print type(user_content)
             user = self
-            type = 'text'
+            content_type = 'text'
             source = 'facebook'
-            content = content.get('short_text', None)
-            url = content.get('url', None)
+            content = user_content.get('message', None)
+            url = user_content.get('permalink_url', None)
             hashed_url = get_hash8(url)
             sentiment_analysis = user_content.get('analysis', None)
-            neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
-            pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
-            neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
-            sentiment_label = sentiment_analysis.get('label')
-            extra_data = json.dumps(user_content.get('relevant_content'))
+            neg_sentiment_rating = None
+            pos_sentiment_rating = None
+            neut_sentiment_rating = None
+            sentiment_label = None
+            if sentiment_analysis:
+                neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                sentiment_label = sentiment_analysis.get('label')
+
+
+            extra_data = {
+                'id': user_content.get('id'),
+                'created_time': user_content.get('created_time')
+
+            }
 
             try:
                 UserContent.objects.create(
-                    user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    user=user, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data
                 )
@@ -106,10 +118,15 @@ class UserProfile(models.Model):
             url = user_content.get('url', None)
             hashed_url = get_hash8(url)
             sentiment_analysis = user_content.get('analysis', None)
-            neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
-            pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
-            neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
-            sentiment_label = sentiment_analysis.get('label')
+            neg_sentiment_rating = None
+            pos_sentiment_rating = None
+            neut_sentiment_rating = None
+            sentiment_label = None
+            if sentiment_analysis:
+                neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                sentiment_label = sentiment_analysis.get('label')
             extra_data = json.dumps(user_content.get('relevant_content'))
 
             try:
@@ -168,10 +185,10 @@ class UserContent(models.Model):
     content = models.TextField(null=True)
     url = models.CharField(max_length=255)
     hashed_url = models.CharField(unique=True, max_length=32, default=random_hash8())
-    neg_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0, max_digits=3)
-    pos_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0, max_digits=3)
-    neut_sentiment_rating = models.DecimalField(decimal_places=3, default=0.0, max_digits=3)
-    sentiment_label = models.CharField(max_length=10, null=True)
+    neg_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
+    pos_sentiment_rating = models.DecimalField(null=True, blank=True,decimal_places=3, default=None, max_digits=3)
+    neut_sentiment_rating = models.DecimalField(null=True, blank=True,decimal_places=3, default=None, max_digits=3)
+    sentiment_label = models.CharField(max_length=10, null=True, default=None)
     extra_data = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
