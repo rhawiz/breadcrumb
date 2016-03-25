@@ -5,6 +5,7 @@ import thread
 from multiprocessing import Process
 
 from breadcrumbcore.contentcollectors.webcollector import WebCollector
+from breadcrumbcore.contentcollectors.facebookcollector import FacebookCollector
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
@@ -14,7 +15,6 @@ from django.db.models import signals
 from jsonfield import JSONField
 
 from django.contrib.auth.models import User
-from breadcrumbcore.contentcollectors import webcollector, facebookcollector
 from breadcrumbcore.ai import sentimentanalyser
 from breadcrumbcore.utils.utils import get_hash8, random_hash8
 
@@ -52,7 +52,36 @@ class UserProfile(models.Model):
         self._scan_web_content()
 
     def _scan_facebook_content(self):
-        print "Facebook scan complete todo: Push notifications"
+        try:
+            fb_account = SocialAccount.objects.get(user_profile=self, provider='facebook')
+        except SocialAccount.DoesNotExist:
+            return None
+
+        access_token = fb_account.social_token
+        fc = FacebookCollector(access_token=access_token)
+        facebook_content = fc.run()
+        for content in facebook_content:
+            user = self
+            type = 'text'
+            source = 'facebook'
+            content = content.get('short_text', None)
+            url = content.get('url', None)
+            hashed_url = get_hash8(url)
+            sentiment_analysis = user_content.get('analysis', None)
+            neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+            pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+            neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+            sentiment_label = sentiment_analysis.get('label')
+            extra_data = json.dumps(user_content.get('relevant_content'))
+
+            try:
+                UserContent.objects.create(
+                    user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data
+                )
+            except Exception, e:
+                print e
 
     def _scan_twitter_content(self):
         print "Twitter scan complete todo: Push notifications"
