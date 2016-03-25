@@ -58,16 +58,14 @@ class UserProfile(models.Model):
             return None
 
         access_token = fb_account.social_token
-        fc = FacebookCollector(access_token=access_token)
+        fc = FacebookCollector(access_token=access_token, sentiment_analyser=sentimentanalyser.analyse_text)
         facebook_content = fc.run()
         for user_content in facebook_content:
-            print type(user_content)
             user = self
             content_type = 'text'
             source = 'facebook'
             content = user_content.get('message', None)
             url = user_content.get('permalink_url', None)
-            print url
             hashed_url = get_hash8(url)
             sentiment_analysis = user_content.get('analysis', None)
             neg_sentiment_rating = None
@@ -79,7 +77,6 @@ class UserProfile(models.Model):
                 pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
                 neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
                 sentiment_label = sentiment_analysis.get('label')
-
 
             extra_data = {
                 'id': user_content.get('id'),
@@ -187,8 +184,8 @@ class UserContent(models.Model):
     url = models.CharField(max_length=255)
     hashed_url = models.CharField(unique=True, max_length=32, default=random_hash8())
     neg_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
-    pos_sentiment_rating = models.DecimalField(null=True, blank=True,decimal_places=3, default=None, max_digits=3)
-    neut_sentiment_rating = models.DecimalField(null=True, blank=True,decimal_places=3, default=None, max_digits=3)
+    pos_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
+    neut_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
     sentiment_label = models.CharField(max_length=10, null=True, default=None)
     extra_data = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
