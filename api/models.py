@@ -67,6 +67,7 @@ class UserProfile(models.Model):
             source = 'facebook'
             content = user_content.get('message', None)
             url = user_content.get('permalink_url', None)
+            print url
             hashed_url = get_hash8(url)
             sentiment_analysis = user_content.get('analysis', None)
             neg_sentiment_rating = None
