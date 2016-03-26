@@ -83,6 +83,10 @@ class UserProfile(models.Model):
                 'created_time': user_content.get('created_time')
 
             }
+            try:
+                UserContent.objects.get(hashed_url=hashed_url).delete()
+            except UserContent.DoesNotExist:
+                pass
 
             try:
                 UserContent.objects.create(
@@ -126,6 +130,11 @@ class UserProfile(models.Model):
                 neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
                 sentiment_label = sentiment_analysis.get('label')
             extra_data = json.dumps(user_content.get('relevant_content'))
+            
+            try:
+                UserContent.objects.get(hashed_url=hashed_url).delete()
+            except UserContent.DoesNotExist:
+                pass
 
             try:
                 UserContent.objects.create(
