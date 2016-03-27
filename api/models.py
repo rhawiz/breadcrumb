@@ -104,11 +104,13 @@ class UserProfile(models.Model):
         search_content = self.aliases
         if not search_content:
             search_content = []
-        first_name = self.user.first_name
-        last_name = self.user.last_name
 
-        if first_name and last_name:
-            search_content.append("{} {}".format(first_name, last_name))
+        fullname = "{} {}".format(self.user.first_name, self.user.last_name)
+
+        for i in search_content:
+            i = "{} {}".format(fullname, i)
+
+        print search_content
 
         wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=50)
         user_web_content = wc.run()
@@ -130,7 +132,7 @@ class UserProfile(models.Model):
                 neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
                 sentiment_label = sentiment_analysis.get('label')
             extra_data = json.dumps(user_content.get('relevant_content'))
-            
+
             try:
                 UserContent.objects.get(hashed_url=hashed_url).delete()
             except UserContent.DoesNotExist:
