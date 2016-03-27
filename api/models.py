@@ -101,14 +101,13 @@ class UserProfile(models.Model):
         print "Twitter scan complete todo: Push notifications"
 
     def _scan_web_content(self):
-        search_content = self.aliases
-        if not search_content:
-            search_content = []
+        search_content = []
 
         fullname = "{} {}".format(self.user.first_name, self.user.last_name)
 
-        for i in search_content:
-            i = "{} {}".format(fullname, i)
+        for alias in self.aliases:
+            search_query = "{} {}".format(fullname, alias)
+            search_content.append(search_query)
 
         print search_content
 
