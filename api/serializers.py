@@ -252,9 +252,9 @@ class UploadImageSerializer(serializers.ModelSerializer):
         user_profile = validated_data.get('user')
         image_base64 = validated_data.get('image_base64')
         file_name = "{}.jpg".format(str(uuid.uuid4()))
-        file_path = "{}\\users\\{}".format(settings.MEDIA_ROOT, user_profile.id)
+        file_path = "{}/users/{}".format(settings.MEDIA_ROOT, user_profile.id)
         if not os.path.exists(file_path):
-            supermakedirs(file_path,mode=0777)
+            os.mkdir(file_path, mode=0777)
         name = validated_data.get('name') or file_name.split(".")[0]
         fh = open("{}\\{}".format(file_path, file_name), "wb")
         fh.write(image_base64.decode('base64'))
