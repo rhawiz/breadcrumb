@@ -256,7 +256,7 @@ class UploadImageSerializer(serializers.ModelSerializer):
         if not os.path.exists(file_path):
             try:
                 original_umask = os.umask(0)
-                os.makedirs('full/path/to/new/directory', os.makedirs(file_path,mode=0777))
+                os.makedirs(file_path,mode=0777)
             finally:
                 os.umask(original_umask)
         name = validated_data.get('name') or file_name.split(".")[0]
