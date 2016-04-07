@@ -298,6 +298,17 @@ class ExtractSocial(APIView):
         data = user_feed
         return Response(data=data)
 
+class UploadImage(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        data["access_token"] = request.META.get('HTTP_AUTHORIZATION', None)
+        serializer = UploadImageSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(data=serializer.data)
 
 class FacebookCallback(APIView):
     def get(self, request, *args, **kwargs):

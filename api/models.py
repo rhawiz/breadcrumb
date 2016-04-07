@@ -168,6 +168,15 @@ class SocialAccount(models.Model):
         return "{} ({})".format(self.user_profile.user.username, self.provider)
 
 
+class Image(models.Model):
+    name = models.CharField(max_length=255)
+    url = models.URLField()
+    user_profile = models.ForeignKey(UserProfile)
+
+    def __unicode__(self):
+        return self.name
+
+
 class UserContent(models.Model):
     SOURCE_FACEBOOK = 'facebook'
     SOURCE_TWITTER = 'twitter'

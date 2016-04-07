@@ -1,4 +1,7 @@
+import base64
 import datetime
+
+import binascii
 from django.contrib.auth.models import User
 from oauth2_provider.models import Application, AccessToken
 from oauth2_provider.settings import oauth2_settings
@@ -45,3 +48,10 @@ def get_user_profile_from_token(token):
     from api.models import UserProfile
     user_profile = UserProfile.objects.get(user=user)
     return user_profile
+
+def is_valid_base64(base_64):
+    try:
+        base64.decodestring(base_64)
+        return True
+    except binascii.Error:
+        return False

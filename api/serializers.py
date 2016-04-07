@@ -1,3 +1,4 @@
+import os
 import urlparse
 
 from django.conf import settings
@@ -11,7 +12,7 @@ from rest_framework.exceptions import *
 from api.models import *
 from rest_framework.utils import model_meta
 
-from api.utils import generate_access_token
+from api.utils import generate_access_token, get_user_profile_from_token, is_valid_base64
 from rest_framework.fields import empty
 import time
 import requests as r
@@ -239,3 +240,51 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessToken
         fields = ('username', 'email', 'password')
+
+
+class UploadImageSerializer(serializers.ModelSerializer):
+    image_base64 = serializers.CharField(required=True)
+    access_token = serializers.CharField(required=True)
+    name = serializers.CharField(required=False)
+    url = serializers.CharField(required=False, read_only=True)
+
+    def create(self, validated_data):
+        user_profile = validated_data.get('user')
+        image_base64 = validated_data.get('image_base64')
+        file_name = "{}.jpg".format(str(uuid.uuid4()))
+        file_path = "{}\\users\\{}".format(settings.MEDIA_ROOT, user_profile.id)
+        if not os.path.exists(file_path):
+            os.makedirs(file_path,mode=0777)
+        name = validated_data.get('name') or file_name.split(".")[0]
+        fh = open("{}\\{}".format(file_path, file_name), "wb")
+        fh.write(image_base64.decode('base64'))
+        fh.close()
+        url = "{}users/{}/{}".format(settings.MEDIA_URL, user_profile.id, file_name)
+        image = Image.objects.create(user_profile=user_profile, url=url, name=name)
+        self._data = {
+            "url": url
+        }
+
+        return image
+
+    def validate(self, data):
+
+        image_base64 = data.get('image_base64', None)
+        access_token = data.get('access_token', None)
+        name = data.get('name', None)
+        user = get_user_profile_from_token(access_token)
+        if not user:
+            raise NotAuthenticated()
+        if not is_valid_base64(image_base64):
+            raise InvalidBase64()
+
+        return {
+            'user': user,
+            'image_base64': image_base64,
+            'name': name
+        }
+
+    class Meta:
+        model = Image
+        fields = ('name', 'url', 'access_token', 'image_base64')
+

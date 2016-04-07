@@ -18,6 +18,7 @@ urlpatterns = [
     url(r'^scan/', views.Scan.as_view(), name="scan"),
     url(r'^scanTest/', views.ScanTest.as_view(), name="scanTest"),
     url(r'^search/(?P<search_text>.+)/$', views.Search.as_view(), name="search"),
+    url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 
     #url(r"^logout/$", views.Logout.as_view(), name="logout"),
 

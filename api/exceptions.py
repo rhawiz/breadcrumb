@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -29,3 +29,8 @@ ERROR_1003_MISSING_LOGIN = {
 class CustomExceptipon(APIException):
     status_code = status.HTTP_404_NOT_FOUND
     default_detail = _('Not found.')
+
+class InvalidBase64(ValidationError):
+    error_code = 1004
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = _('Invalid base64 input.')
