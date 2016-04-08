@@ -255,7 +255,7 @@ class UserContent(models.Model):
     source = models.CharField(max_length=32, choices=SOURCE_CHOICES)
     content = models.TextField(null=True)
     url = models.CharField(max_length=255)
-    hashed_url = models.CharField(unique=True, max_length=32, default=random_hash8())
+    hashed_url = models.CharField(unique=True, max_length=32, default=None)
     neg_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
     pos_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
     neut_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
