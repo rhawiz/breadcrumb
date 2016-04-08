@@ -119,9 +119,7 @@ class UserProfile(models.Model):
             consumer_key=consumer_key,
         )
         twitter_content = tc.run()
-        print twitter_content
         for item in twitter_content:
-            print item
             content_type = 'text'
             source = 'twitter'
             content = item['text']
@@ -147,6 +145,7 @@ class UserProfile(models.Model):
                     sentiment_label = sentiment_analysis.get('label')
 
                 try:
+                    print "creating content"
                     content = UserContent.objects.create(
                         user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                         neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
