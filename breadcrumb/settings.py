@@ -64,7 +64,7 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'breadcrumb.urls'
 
-SESSION_KEY = "0baobuzgp8lr4k7dkfty60qzrej2oj3n"
+SESSION_KEY = "10ml89pdqor5kepwogmsj42pk40dww5r"
 
 TEMPLATES = [
     {
