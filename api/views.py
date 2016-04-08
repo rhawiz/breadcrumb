@@ -364,7 +364,7 @@ class TwitterCallback(APIView):
             'request_token': s.get('request_token'),
             'sessions':sessions
         }
-
+        return Response(data=data)
         s.delete('request_token')
         s.save()
         serializer = TwitterLoginSerializer(data=data)
