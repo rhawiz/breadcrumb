@@ -124,8 +124,8 @@ class UserProfile(models.Model):
             source = 'twitter'
             content = item['text']
             url = item['url']
+            hashed_url = get_hash8(url)
             if UserContent.objects.filter(hashed_url=hashed_url) == 0:
-                hashed_url = get_hash8(url)
                 sentiment_analysis = item.get('analysis', None)
                 neg_sentiment_rating = None
                 pos_sentiment_rating = None
