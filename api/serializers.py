@@ -1,6 +1,8 @@
 import os
 import urlparse
 
+from django.contrib.sessions.backends.db import SessionStore
+import tweepy
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.exceptions import MultipleObjectsReturned
@@ -129,6 +131,8 @@ class FacebookLoginSerializer(serializers.Serializer):
         social_account = None
         try:
             social_account = SocialAccount.objects.get(provider='facebook', social_id=fb_id)
+            social_account.social_token = access_token
+            social_account.save()
         except SocialAccount.DoesNotExist:
             user_profile_data = {
                 'username': email,
@@ -186,6 +190,87 @@ class FacebookLoginSerializer(serializers.Serializer):
             raise ValidationError(detail={'access_token': 'Could not retrieve Facebook access token'})
 
         return {'access_token': fb_access_token}
+
+
+class TwitterLoginSerializer(serializers.Serializer):
+    oauth_verifier = serializers.CharField(write_only=True)
+    request_token = serializers.DictField(write_only=True)
+
+    def create(self, validated_data):
+        key = validated_data.get('key')
+        secret = validated_data.get('secret')
+        consumer_secret = validated_data.get('consumer_secret')
+        consumer_key = validated_data.get('consumer_key')
+
+        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+        auth.set_access_token(key, secret)
+        api = tweepy.API(auth)
+        twitter_data = api.me()
+        twitter_id = twitter_data.id
+        fullname = twitter_data.name
+        email = "{}@test.com".format(str(uuid.uuid4())[24:])
+        social_account = None
+        print email
+        try:
+            social_account = SocialAccount.objects.get(provider='twitter', social_id=twitter_id)
+        except SocialAccount.DoesNotExist:
+            user_profile_data = {
+                'username': email,
+                'email': email,
+                'password': uuid.uuid4(),
+                'fullname': fullname,
+            }
+            user_profile_serializer = SignupSerializer(data=user_profile_data)
+            user_profile_serializer.is_valid(raise_exception=True)
+            user_profile = user_profile_serializer.save()
+            social_account = SocialAccount.objects.create(
+                user_profile=user_profile,
+                social_id=twitter_id,
+                social_token=key,
+                social_secret=secret,
+                provider='twitter'
+            )
+
+        user_profile = social_account.user_profile
+        access_token = generate_access_token(user_profile.user)
+
+        access_token_data = AccessTokenSerializer(access_token).data
+        self._data = access_token_data
+        return user_profile
+
+    def validate(self, data):
+        verifier = data.get('oauth_verifier', None)
+        request_token = data.get('request_token', None)
+        consumer_key = getattr(settings, "TWITTER_CONSUMER_KEY", None)
+        consumer_secret = getattr(settings, "TWITTER_CONSUMER_SECRET", None)
+        callback_url = getattr(settings, "TWITTER_CALLBACK_URL", None)
+        if not consumer_key:
+            raise ValidationError(detail={'client_id': 'Cannot find TWITTER_CONSUMER_KEY in django settings'})
+        if not consumer_secret:
+            raise ValidationError(detail={'client_secret': 'Cannot find TWITTER_CONSUMER_SECRET in django settings'})
+        if not callback_url:
+            raise ValidationError(detail={'callback_url': 'Cannot find TWITTER_CALLBACK_URL in django settings'})
+        if not verifier:
+            raise ValidationError(detail={'oauth_verifier': 'This field is required.'})
+        if not request_token:
+            raise ValidationError(detail={'request_token': 'This field is required.'})
+
+        auth = tweepy.OAuthHandler(
+            settings.TWITTER_CONSUMER_KEY,
+            settings.TWITTER_CONSUMER_SECRET
+        )
+        auth.request_token = request_token
+        key, secret = auth.get_access_token(verifier)
+
+        return {
+            'key': key,
+            'secret': secret,
+            'consumer_key': consumer_key,
+            'consumer_secret': consumer_secret
+        }
+
+    class Meta:
+        fields = ('oauth_verifier', 'request_token')
 
 
 class AccessTokenSerializer(serializers.ModelSerializer):
@@ -287,4 +372,3 @@ class UploadImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ('name', 'url', 'access_token', 'image_base64')
-

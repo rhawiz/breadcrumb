@@ -98,7 +98,10 @@ class UserProfile(models.Model):
                 print e
 
     def _scan_twitter_content(self):
-        print "Twitter scan complete todo: Push notifications"
+        try:
+            twitter_account = SocialAccount.objects.get(user_profile=self, provider='twitter')
+        except SocialAccount.DoesNotExist:
+            return None
 
     def _scan_web_content(self):
         search_content = []
@@ -162,6 +165,7 @@ class SocialAccount(models.Model):
     user_profile = models.ForeignKey(UserProfile)
     social_id = models.CharField(max_length=255)
     social_token = models.CharField(max_length=255)
+    social_secret = models.CharField(max_length=255, null=True, default=None)
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
 
     def __unicode__(self):

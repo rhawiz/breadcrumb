@@ -64,6 +64,11 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'breadcrumb.urls'
 
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_SECURE = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_KEY = "0baobuzgp8lr4k7dkfty60qzrej2oj3n"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -94,10 +99,13 @@ except Exception:
 FACEBOOK_CLIENT_ID = '195217574177770'
 FACEBOOK_CLIENT_SECRET = 'd7c48a5db8ca2a126b71d487fd456817'
 
+TWITTER_CONSUMER_KEY = 'c2eZxqYJ1l6fHO9X2M42DsDgH'
+TWITTER_CONSUMER_SECRET = '7nitL4Qo2LXilFySk4PPgwYOEZDXWxQIbC6bdS32fKQlSBah55'
 
 
 if ip == '104.155.75.17':
     FACEBOOK_CALLBACK_URL = "http://104.155.75.17/api/facebook_callback/"
+    TWITTER_CALLBACK_URL = "http://104.155.75.17/api/twitter_callback/"
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -110,6 +118,7 @@ if ip == '104.155.75.17':
     }
 else:
     FACEBOOK_CALLBACK_URL = "http://localhost:8080/api/facebook_callback/"
+    TWITTER_CALLBACK_URL = "http://127.0.0.1:8080/api/twitter_callback/"
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',

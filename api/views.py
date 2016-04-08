@@ -1,6 +1,11 @@
 import pickle
+from importlib import import_module
 
+import tweepy
+from django.contrib.sessions.backends.db import SessionStore
+from django.http import HttpResponseRedirect
 from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
+from django.contrib.sessions.models import Session
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -161,6 +166,7 @@ class Scan(APIView):
         scan_user_content.delay(str(user_profile.pk))
         return Response(status=status.HTTP_200_OK)
 
+
 class ScanTest(APIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -216,7 +222,7 @@ class SentAnalyser(APIView):
 class SocialLogin(APIView):
     def post(self, request, *args, **kwargs):
         # todo: Put these all into serializers
-        acceptable_providers = ['facebook', 'twitter']
+        accepted_providers = ['facebook', 'twitter']
         access_token = request.data.get('access_token', None)
         provider = request.data.get('access_token', None)
         if not access_token:
@@ -225,9 +231,9 @@ class SocialLogin(APIView):
         if not provider:
             return Response(data={"provider": ["This field is required."]})
 
-        if provider not in acceptable_providers:
+        if provider not in accepted_providers:
             return Response(
-                data={"provider": ["Not a valid provider, choices are:{}".format(acceptable_providers)]})
+                data={"provider": ["Not a valid provider, choices are:{}".format(accepted_providers)]})
 
         url = "https://graph.facebook.com/me?access_token={}"
         response = r.get(url)
@@ -298,6 +304,7 @@ class ExtractSocial(APIView):
         data = user_feed
         return Response(data=data)
 
+
 class UploadImage(APIView):
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
@@ -310,11 +317,55 @@ class UploadImage(APIView):
         serializer.save()
         return Response(data=serializer.data)
 
+
+class FacebookLogin(APIView):
+    def get(self, request, *args, **kwargs):
+        base_url = "https://www.facebook.com/dialog/oauth?scope=email,public_profile,user_friends,user_likes,user_photos,user_posts&client_id={client_id}&redirect_uri={callback_url}"
+        redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
+                                       callback_url=settings.FACEBOOK_CALLBACK_URL)
+        try:
+            return HttpResponseRedirect(redirect_url)
+        except Exception:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class FacebookCallback(APIView):
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code', None)
         data = {'code': code}
         serializer = FacebookLoginSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        print serializer.save()
+        serializer.save()
+        return Response(data=serializer.data)
+
+class TwitterLogin(APIView):
+    def get(self, request, *args, **kwargs):
+        auth = tweepy.OAuthHandler(
+            settings.TWITTER_CONSUMER_KEY,
+            settings.TWITTER_CONSUMER_SECRET,
+            settings.TWITTER_CALLBACK_URL
+        )
+        try:
+            redirect_url = auth.get_authorization_url()
+            s = SessionStore(session_key=settings.SESSION_KEY)
+            s['request_token'] = auth.request_token
+            s.save()
+            return HttpResponseRedirect(redirect_url)
+        except tweepy.TweepError:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TwitterCallback(APIView):
+    def get(self, request, *args, **kwargs):
+        s = SessionStore(session_key=settings.SESSION_KEY)
+
+        data = {
+            'oauth_verifier': request.GET['oauth_verifier'],
+            'request_token': s.get('request_token')
+        }
+
+        s.delete('request_token')
+        s.save()
+        serializer = TwitterLoginSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(data=serializer.data)
