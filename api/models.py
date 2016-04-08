@@ -134,6 +134,7 @@ class UserProfile(models.Model):
 
                 if not sentiment_analysis:
                     try:
+                        print content
                         sentiment_analysis = sentimentanalyser.analyse_text(content)
                     except Exception:
                         pass
