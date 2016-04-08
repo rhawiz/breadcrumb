@@ -358,7 +358,7 @@ class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
         s = SessionStore(session_key=settings.SESSION_KEY)
         session_objs = Session.objects.all()
-        sessions = [session for session in session_objs]
+        sessions = [session.session_key for session in session_objs]
         data = {
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get('request_token'),
