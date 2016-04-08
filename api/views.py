@@ -350,7 +350,8 @@ class TwitterLogin(APIView):
             s['request_token'] = auth.request_token
             s.save()
             return Response(data={
-                "s":s["request_token"]
+                "s":s["request_token"],
+                "key":s.session_key
             })
             return HttpResponseRedirect(redirect_url)
         except tweepy.TweepError:
