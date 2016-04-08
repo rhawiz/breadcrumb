@@ -360,6 +360,7 @@ class TwitterCallback(APIView):
         session_objs = Session.objects.all()
         sessions = [session.session_key for session in session_objs]
         data = {
+            's':s.session_key,
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get('request_token'),
             'sessions':sessions
