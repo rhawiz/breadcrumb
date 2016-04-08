@@ -145,11 +145,12 @@ class UserProfile(models.Model):
                     sentiment_label = sentiment_analysis.get('label')
 
                 try:
-                    UserContent.objects.create(
+                    content = UserContent.objects.create(
                         user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                         neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                         neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label
                     )
+                    print content
                 except Exception, e:
                     print e
 
