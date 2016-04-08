@@ -362,7 +362,7 @@ class TwitterCallback(APIView):
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get('request_token')
         }
-
+        return Response(data=data)
         s.delete('request_token')
         s.save()
         serializer = TwitterLoginSerializer(data=data)
