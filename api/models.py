@@ -157,8 +157,8 @@ class UserProfile(models.Model):
         search_content = []
 
         fullname = "{} {}".format(self.user.first_name, self.user.last_name)
-
-        for alias in self.aliases:
+        aliases = self.aliases or []
+        for alias in aliases:
             search_query = "{} {}".format(fullname, alias)
             search_content.append(search_query)
 
