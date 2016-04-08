@@ -125,7 +125,7 @@ class UserProfile(models.Model):
             content = item['text']
             url = item['url']
             hashed_url = get_hash8(url)
-            if UserContent.objects.filter(hashed_url=hashed_url) == 0:
+            if len(UserContent.objects.filter(hashed_url=hashed_url)) == 0:
                 sentiment_analysis = item.get('analysis', None)
                 neg_sentiment_rating = None
                 pos_sentiment_rating = None
