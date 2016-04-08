@@ -119,7 +119,9 @@ class UserProfile(models.Model):
             consumer_key=consumer_key,
         )
         twitter_content = tc.run()
+        print twitter_content
         for item in twitter_content:
+            print item
             content_type = 'text'
             source = 'twitter'
             content = item['text']
