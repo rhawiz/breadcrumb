@@ -4,6 +4,7 @@ import json
 import thread
 from multiprocessing import Process
 
+from breadcrumbcore.contentcollectors.twittercollector import TwitterCollector
 from breadcrumbcore.contentcollectors.webcollector import WebCollector
 from breadcrumbcore.contentcollectors.facebookcollector import FacebookCollector
 from django.db import models
@@ -17,6 +18,8 @@ from jsonfield import JSONField
 from django.contrib.auth.models import User
 from breadcrumbcore.ai import sentimentanalyser
 from breadcrumbcore.utils.utils import get_hash8, random_hash8
+
+from breadcrumb import settings
 
 User._meta.get_field('email')._unique = True
 
@@ -102,6 +105,53 @@ class UserProfile(models.Model):
             twitter_account = SocialAccount.objects.get(user_profile=self, provider='twitter')
         except SocialAccount.DoesNotExist:
             return None
+
+        key = twitter_account.social_token
+        secret = twitter_account.social_secret
+
+        consumer_secret = settings.TWITTER_CONSUMER_SECRET
+        consumer_key = settings.TWITTER_CONSUMER_KEY
+
+        tc = TwitterCollector(
+            key=key,
+            secret=secret,
+            consumer_secret=consumer_secret,
+            consumer_key=consumer_key,
+        )
+        twitter_content = tc.run()
+        for item in twitter_content:
+            content_type = 'text'
+            source = 'twitter'
+            content = item['text']
+            url = item['url']
+            if UserContent.objects.filter(hashed_url=hashed_url) == 0:
+                hashed_url = get_hash8(url)
+                sentiment_analysis = item.get('analysis', None)
+                neg_sentiment_rating = None
+                pos_sentiment_rating = None
+                neut_sentiment_rating = None
+                sentiment_label = None
+
+                if not sentiment_analysis:
+                    try:
+                        sentiment_analysis = sentimentanalyser.analyse_text(content)
+                    except Exception:
+                        pass
+
+                if sentiment_analysis:
+                    neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                    pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                    neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                    sentiment_label = sentiment_analysis.get('label')
+
+                try:
+                    UserContent.objects.create(
+                        user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
+                        neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label
+                    )
+                except Exception, e:
+                    print e
 
     def _scan_web_content(self):
         search_content = []
