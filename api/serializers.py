@@ -236,6 +236,7 @@ class TwitterLoginSerializer(serializers.Serializer):
 
         access_token_data = AccessTokenSerializer(access_token).data
         self._data = access_token_data
+
         return user_profile
 
     def validate(self, data):

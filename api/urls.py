@@ -14,7 +14,6 @@ urlpatterns = [
     url(r'^twitter_login/', views.TwitterLogin.as_view(), name="twitter_login"),
     url(r'^facebook_login/', views.FacebookLogin.as_view(), name="facebook_login"),
     url(r'^scan/', views.Scan.as_view(), name="scan"),
-    url(r'^search/(?P<search_text>.+)/$', views.Search.as_view(), name="search"),
     url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),

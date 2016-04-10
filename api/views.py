@@ -56,6 +56,7 @@ class Scan(APIView):
         scan_user_content.delay(str(user_profile.pk))
         return Response(status=status.HTTP_200_OK)
 
+
 class Signup(generics.CreateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = SignupSerializer
@@ -105,6 +106,7 @@ class FacebookLogin(APIView):
         except Exception:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class FacebookCallback(APIView):
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code', None)
@@ -113,6 +115,7 @@ class FacebookCallback(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(data=serializer.data)
+
 
 class TwitterLogin(APIView):
     def get(self, request, *args, **kwargs):
@@ -123,9 +126,11 @@ class TwitterLogin(APIView):
         )
         try:
             redirect_url = auth.get_authorization_url()
-            s = SessionStore(session_key=settings.SESSION_KEY)
+            s = SessionStore()
             s['request_token'] = auth.request_token
-            s.save()
+            s.save(must_create=True)
+            settings.TWITTER_LOGIN_SESSION_KEY = s.session_key
+
             return HttpResponseRedirect(redirect_url)
         except tweepy.TweepError:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -133,9 +138,7 @@ class TwitterLogin(APIView):
 
 class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
-        s = SessionStore(session_key=settings.SESSION_KEY)
-        session_objs = Session.objects.all()
-        sessions = [session.session_key for session in session_objs]
+        s = SessionStore(session_key=settings.TWITTER_LOGIN_SESSION_KEY)
         data = {
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get('request_token'),
