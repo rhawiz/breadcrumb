@@ -140,11 +140,9 @@ class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
 
         s = SessionStore(session_key=settings.TWITTER_LOGIN_SESSION_KEY)
-        # data = {}
-        # data['session_key'] = settings.TWITTER_LOGIN_SESSION_KEY
-        # data['s'] = s
-        # data['s.session_key'] = s.session_key
-        # return Response(data=data)
+        data = {}
+        data['s'] = s
+        return Response(data=data)
         return Response(data={
             "s":s,
             "s.session_key":s.session_key,
