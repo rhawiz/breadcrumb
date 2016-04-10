@@ -130,7 +130,6 @@ class TwitterLogin(APIView):
             s = SessionStore()
             s['request_token'] = auth.request_token
             s.save(must_create=True)
-            settings.TWITTER_LOGIN_SESSION_KEY = s.session_key
             return HttpResponseRedirect(redirect_url)
         except tweepy.TweepError:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -140,11 +139,6 @@ class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
         session_key = Session.objects.latest('expire_date').session_key
         s = SessionStore(session_key=session_key)
-        # data = {}
-        # data['session_key'] = session_key
-        # data['s'] = s
-        # data['s.session_key'] = s.session_key
-        # return Response(data=data)
 
         data = {
             'oauth_verifier': request.GET['oauth_verifier'],
