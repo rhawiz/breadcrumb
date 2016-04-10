@@ -145,16 +145,16 @@ class TwitterCallback(APIView):
         # data['s'] = s
         # data['s.session_key'] = s.session_key
         # return Response(data=data)
-        request_token = s.get('request_token')
-        data = {
-            'oauth_verifier': request.GET['oauth_verifier'],
-            'request_token': request_token,
-        }
         return Response(data={
             "s":s,
             "s.request_token":s.get("request_token"),
             "check":s.has_key("request_token")}
         )
+        data = {
+            'oauth_verifier': request.GET['oauth_verifier'],
+            'request_token': s.get("request_token"),
+        }
+
         s.delete('request_token')
         s.save()
         return Response(data=data)
