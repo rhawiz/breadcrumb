@@ -131,6 +131,11 @@ class TwitterLogin(APIView):
             s['request_token'] = auth.request_token
             s.save(must_create=True)
             settings.TWITTER_LOGIN_SESSION_KEY = s.session_key
+            data = {}
+            data['session_key'] = settings.TWITTER_LOGIN_SESSION_KEY
+            data['s'] = s
+            data['s.session_key'] = s.session_key
+            return Response(data=data)
             return HttpResponseRedirect(redirect_url)
         except tweepy.TweepError:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -145,11 +150,7 @@ class TwitterCallback(APIView):
         data['s'] = s
         data['s.session_key'] = s.session_key
         return Response(data=data)
-        return Response(data={
-            "s":s,
-            "s.request_token":s.get("request_token"),
-            "check":s.has_key("request_token")}
-        )
+
         data = {
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get("request_token"),
@@ -157,7 +158,6 @@ class TwitterCallback(APIView):
 
         s.delete('request_token')
         s.save()
-        return Response(data=data)
         serializer = TwitterLoginSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
