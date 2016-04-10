@@ -140,8 +140,10 @@ class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
         sys.stderr(settings.TWITTER_LOGIN_SESSION_KEY)
         s = SessionStore(session_key=settings.TWITTER_LOGIN_SESSION_KEY)
-        sys.stderr(s)
-        sys.stderr(s.session_key)
+        f = open("log.txt","w+")
+        f.write(s)
+        f.write(s.session_key)
+        f.close()
         data = {
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get('request_token'),
