@@ -138,9 +138,9 @@ class TwitterLogin(APIView):
 
 class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
-        sys.stderr(settings.TWITTER_LOGIN_SESSION_KEY)
+        f = open("log.txt", "w+")
+        f.write(settings.TWITTER_LOGIN_SESSION_KEY)
         s = SessionStore(session_key=settings.TWITTER_LOGIN_SESSION_KEY)
-        f = open("log.txt","w+")
         f.write(s)
         f.write(s.session_key)
         f.close()
