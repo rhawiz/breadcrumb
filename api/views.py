@@ -141,7 +141,9 @@ class TwitterCallback(APIView):
 
         s = SessionStore(session_key=settings.TWITTER_LOGIN_SESSION_KEY)
         data = {}
+        data['session_key'] = settings.TWITTER_LOGIN_SESSION_KEY
         data['s'] = s
+        data['s.session_key'] = s.session_key
         return Response(data=data)
         return Response(data={
             "s":s,
