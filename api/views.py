@@ -1,6 +1,7 @@
 import pickle
 from importlib import import_module
 
+import sys
 import tweepy
 from django.contrib.sessions.backends.db import SessionStore
 from django.http import HttpResponseRedirect
@@ -130,7 +131,6 @@ class TwitterLogin(APIView):
             s['request_token'] = auth.request_token
             s.save(must_create=True)
             settings.TWITTER_LOGIN_SESSION_KEY = s.session_key
-
             return HttpResponseRedirect(redirect_url)
         except tweepy.TweepError:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -138,7 +138,10 @@ class TwitterLogin(APIView):
 
 class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
+        sys.stderr(settings.TWITTER_LOGIN_SESSION_KEY)
         s = SessionStore(session_key=settings.TWITTER_LOGIN_SESSION_KEY)
+        sys.stderr(s)
+        sys.stderr(s.session_key)
         data = {
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get('request_token'),
