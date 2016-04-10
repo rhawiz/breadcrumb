@@ -147,7 +147,7 @@ class TwitterCallback(APIView):
         return Response(data=data)
         return Response(data={
             "s":s,
-            "s.session_key":s.session_key,
+            "s.request_token":s.get("request_token"),
             "check":s.has_key("request_token")}
         )
         data = {
