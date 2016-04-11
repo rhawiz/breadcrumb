@@ -13,6 +13,8 @@ urlpatterns = [
     url(r'^twitter_callback/', views.TwitterCallback.as_view(), name="twitter_callback"),
     url(r'^twitter_login/', views.TwitterLogin.as_view(), name="twitter_login"),
     url(r'^facebook_login/', views.FacebookLogin.as_view(), name="facebook_login"),
+    url(r'^link_twitter/(?P<access_token>[^/]+)/$', views.LinkTwitterAccount.as_view(), name="link_twitter"),
+    url(r'^link_facebook/(?P<access_token>[^/]+)/$', views.LinkFacebookAccount.as_view(), name="link_facebook"),
     url(r'^scan/', views.Scan.as_view(), name="scan"),
     url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 

@@ -102,6 +102,9 @@ class FacebookLogin(APIView):
         base_url = "https://www.facebook.com/dialog/oauth?scope=email,public_profile,user_friends,user_likes,user_photos,user_posts&client_id={client_id}&redirect_uri={callback_url}"
         redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
                                        callback_url=settings.FACEBOOK_CALLBACK_URL)
+        s = SessionStore()
+        s['is_login'] = True
+        s.save(must_create=True)
         try:
             return HttpResponseRedirect(redirect_url)
         except Exception:
@@ -112,7 +115,19 @@ class FacebookCallback(APIView):
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code', None)
         data = {'code': code}
-        serializer = FacebookLoginSerializer(data=data)
+        session_key = Session.objects.latest('expire_date').session_key
+        s = SessionStore(session_key=session_key)
+        is_login = s.get('is_login')
+        access_token = s.get('access_token')
+        s.delete('is_login')
+        s.delete('access_token')
+        s.delete()
+        if is_login:
+            serializer = FacebookLoginSerializer(data=data)
+        else:
+            data["access_token"] = access_token
+            serializer = LinkFacebookAccountSerializer(data=data)
+
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(data=serializer.data)
@@ -129,6 +144,8 @@ class TwitterLogin(APIView):
             redirect_url = auth.get_authorization_url()
             s = SessionStore()
             s['request_token'] = auth.request_token
+            s['is_login'] = True
+            s['access_token'] = None
             s.save(must_create=True)
             return HttpResponseRedirect(redirect_url)
         except tweepy.TweepError:
@@ -139,15 +156,63 @@ class TwitterCallback(APIView):
     def get(self, request, *args, **kwargs):
         session_key = Session.objects.latest('expire_date').session_key
         s = SessionStore(session_key=session_key)
-
+        is_login = s.get('is_login')
+        access_token = s.get('access_token')
         data = {
             'oauth_verifier': request.GET['oauth_verifier'],
             'request_token': s.get("request_token"),
         }
-
         s.delete('request_token')
+        s.delete('is_login')
+        s.delete('access_token')
         s.save()
-        serializer = TwitterLoginSerializer(data=data)
+        if is_login:
+            serializer = TwitterLoginSerializer(data=data)
+        else:
+            data["access_token"] = access_token
+            serializer = LinkTwitterAccountSerializer(data=data)
+
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(data=serializer.data)
+        response_data = serializer.data
+        return Response(data=response_data)
+
+
+class LinkTwitterAccount(APIView):
+    # authentication_classes = (OAuth2Authentication,)
+    # permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        auth = tweepy.OAuthHandler(
+            settings.TWITTER_CONSUMER_KEY,
+            settings.TWITTER_CONSUMER_SECRET,
+            settings.TWITTER_CALLBACK_URL
+        )
+        try:
+            redirect_url = auth.get_authorization_url()
+            s = SessionStore()
+            s['request_token'] = auth.request_token
+            s['is_login'] = False
+            s['access_token'] = kwargs.get("access_token")
+            s.save(must_create=True)
+            return HttpResponseRedirect(redirect_url)
+        except tweepy.TweepError:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class LinkFacebookAccount(APIView):
+    # authentication_classes = (OAuth2Authentication,)
+    # permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        base_url = "https://www.facebook.com/dialog/oauth?scope=email,public_profile,user_friends,user_likes,user_photos,user_posts&client_id={client_id}&redirect_uri={callback_url}"
+        redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
+                                       callback_url=settings.FACEBOOK_CALLBACK_URL)
+        s = SessionStore()
+        s['is_login'] = False
+        s['access_token'] = kwargs.get("access_token")
+        s.save(must_create=True)
+        try:
+            return HttpResponseRedirect(redirect_url)
+        except Exception:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
