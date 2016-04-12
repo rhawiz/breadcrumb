@@ -102,6 +102,15 @@ class SignupSerializer(serializers.Serializer):
 
         user_profile = UserProfile.objects.create(**user_profile_data)
         user_profile.save()
+
+        access_token = generate_access_token(user)
+
+        user_data = UserSerializer(user_profile.user).data
+        self._data = {
+            "access_token": str(access_token),
+            'user': user_data,
+        }
+
         return user_profile
 
 
@@ -112,16 +121,12 @@ class FacebookLoginSerializer(serializers.Serializer):
         fields = ('code')
 
     def create(self, validated_data):
-        access_token = validated_data.get('access_token', None)
 
-        user_info_url = "https://graph.facebook.com/v2.5/me?access_token={}&fields=id,name,email,gender".format(
-            access_token)
-
-        user_info_response = r.get(user_info_url).json()
-        fb_id = user_info_response.get('id')
-        fullname = user_info_response.get('name')
-        email = user_info_response.get('email')
-        gender = user_info_response.get('gender')
+        fb_id = validated_data.get('fb_id')
+        fullname = validated_data.get('name')
+        email = validated_data.get('email')
+        gender = validated_data.get('gender')
+        fb_access_token = validated_data.get('fb_access_token')
 
         gender_id = 0
         if gender == 'male':
@@ -131,8 +136,8 @@ class FacebookLoginSerializer(serializers.Serializer):
 
         social_account = None
         try:
-            social_account = SocialAccount.objects.get(provider='facebook', social_id=fb_id)
-            social_account.social_token = access_token
+            social_account = SocialAccount.objects.get(provider='facebook', social_id=fb_id, authenticator=True)
+            social_account.social_token = fb_access_token
             social_account.save()
         except SocialAccount.DoesNotExist:
             user_profile_data = {
@@ -145,15 +150,22 @@ class FacebookLoginSerializer(serializers.Serializer):
             user_profile_serializer = SignupSerializer(data=user_profile_data)
             user_profile_serializer.is_valid(raise_exception=True)
             user_profile = user_profile_serializer.save()
-            social_account = SocialAccount.objects.create(user_profile=user_profile, social_id=fb_id,
-                                                          social_token=access_token,
-                                                          provider='facebook')
+            social_account = SocialAccount.objects.create(user_profile=user_profile,
+                                                          social_id=fb_id,
+                                                          social_token=fb_access_token,
+                                                          provider='facebook',
+                                                          authenticator=True)
 
         user_profile = social_account.user_profile
         access_token = generate_access_token(user_profile.user)
 
-        access_token_data = AccessTokenSerializer(access_token).data
-        self._data = access_token_data
+        user_data = UserSerializer(user_profile.user).data
+
+        self._data = {
+            "access_token": str(access_token),
+            'user': user_data,
+        }
+
         return user_profile
 
     def validate(self, data):
@@ -190,7 +202,30 @@ class FacebookLoginSerializer(serializers.Serializer):
         if not fb_access_token:
             raise ValidationError(detail={'access_token': 'Could not retrieve Facebook access token'})
 
-        return {'access_token': fb_access_token}
+        user_info_url = "https://graph.facebook.com/v2.5/me?access_token={}&fields=id,name,email,gender".format(
+            fb_access_token)
+
+        user_info_response = r.get(user_info_url).json()
+
+        fb_id = user_info_response.get('id')
+        fullname = user_info_response.get('name')
+        gender = user_info_response.get('gender')
+
+        email = user_info_response.get('email')
+        try:
+            User.objects.get(email=email)
+            email = "%s@placeholder" % str(uuid.uuid4())
+        except User.DoesNotExist:
+            pass
+
+
+        return {
+            'fb_id': fb_id,
+            'name': fullname,
+            'email': email,
+            'gender': gender,
+            'fb_access_token': fb_access_token
+        }
 
 
 class LinkFacebookAccountSerializer(serializers.Serializer):
@@ -202,22 +237,23 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         fb_access_token = validated_data.get('fb_access_token', None)
-        access_token = validated_data.get('access_token', None)
+        user_profile = validated_data.get('user_profile', None)
+        fb_id = validated_data.get('fb_id', None)
 
-        user_info_url = "https://graph.facebook.com/v2.5/me?access_token={}&fields=id,name,email,gender".format(
-            fb_access_token)
-
-        user_info_response = r.get(user_info_url).json()
-        fb_id = user_info_response.get('id')
-
-        user_profile = get_user_profile_from_token("Bearer %s" % access_token)
-
-        social_account = SocialAccount.objects.create(
-            user_profile=user_profile,
-            social_id=fb_id,
-            social_token=fb_access_token,
-            provider='facebook'
-        )
+        try:
+            social_account = SocialAccount.objects.get(
+                provider='facebook',
+                social_id=fb_id,
+                user_profile=user_profile
+            )
+        except SocialAccount.DoesNotExist:
+            social_account = SocialAccount.objects.create(
+                user_profile=user_profile,
+                social_id=fb_id,
+                social_token=fb_access_token,
+                provider='facebook',
+                authenticator=False
+            )
 
         self._data = {
             "social_id": social_account.social_id,
@@ -267,8 +303,16 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
         if not fb_access_token:
             raise ValidationError(detail={'access_token': 'Could not retrieve Facebook access token'})
 
+        user_info_url = "https://graph.facebook.com/v2.5/me?access_token={}&fields=id,name,email,gender".format(
+            fb_access_token)
+
+        user_info_response = r.get(user_info_url).json()
+        fb_id = user_info_response.get('id')
+        user_profile = get_user_profile_from_token("Bearer %s" % access_token)
+
         return {'fb_access_token': fb_access_token,
-                'access_token': access_token}
+                'user_profile': user_profile,
+                'fb_id': fb_id}
 
 
 class LinkTwitterAccountSerializer(serializers.Serializer):
@@ -279,23 +323,25 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
     def create(self, validated_data):
         key = validated_data.get('key')
         secret = validated_data.get('secret')
-        access_token = validated_data.get('access_token')
-        consumer_secret = validated_data.get('consumer_secret')
-        consumer_key = validated_data.get('consumer_key')
-        url = "https://api.twitter.com/1.1/account/verify_credentials.json?&include_email=true"
-        auth = OAuth1(consumer_key, consumer_secret, key, secret)
-        r = requests.get(url=url, auth=auth)
-        twitter_data = r.json()
-        twitter_id = twitter_data.get('id')
+        twitter_id = validated_data.get('twitter_id')
+        user_profile = validated_data.get('user_profile')
 
-        user_profile = get_user_profile_from_token("Bearer %s" % access_token)
-        social_account = SocialAccount.objects.create(
-            user_profile=user_profile,
-            social_id=twitter_id,
-            social_token=key,
-            social_secret=secret,
-            provider='twitter'
-        )
+        social_account = None
+        try:
+            social_account = SocialAccount.objects.get(
+                provider='twitter',
+                social_id=twitter_id,
+                user_profile=user_profile
+            )
+        except SocialAccount.DoesNotExist:
+            social_account = SocialAccount.objects.create(
+                user_profile=user_profile,
+                social_id=twitter_id,
+                social_token=key,
+                social_secret=secret,
+                provider='twitter',
+                authenticator=False,
+            )
 
         self._data = {
             "social_id": social_account.social_id,
@@ -330,23 +376,30 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
         auth.request_token = request_token
         key, secret = auth.get_access_token(verifier)
 
-        if len(SocialAccount.objects.filter(provider='twitter', social_token=key)) >= 1:
-            raise ValidationError(detail={"social_token": "Social token in use."})
+        # if len(SocialAccount.objects.filter(provider='twitter', social_token=key)) >= 1:
+        #     raise ValidationError(detail={"social_token": "Social token in use."})
+        #
+        # if len(SocialAccount.objects.filter(provider='twitter', social_secret=secret)) >= 1:
+        #     raise ValidationError(detail={"social_secret": "Secret key in use."})
 
-        if len(SocialAccount.objects.filter(provider='twitter', social_secret=secret)) >= 1:
-            raise ValidationError(detail={"social_secret": "Secret key in use."})
 
         try:
             AccessToken.objects.get(token=access_token)
         except AccessToken.DoesNotExist:
             raise NotAuthenticated()
 
+        url = "https://api.twitter.com/1.1/account/verify_credentials.json?&include_email=true"
+        auth = OAuth1(consumer_key, consumer_secret, key, secret)
+        r = requests.get(url=url, auth=auth)
+        twitter_data = r.json()
+        twitter_id = twitter_data.get('id')
+        user_profile = get_user_profile_from_token("Bearer %s" % access_token)
+
         return {
             'key': key,
             'secret': secret,
-            'consumer_key': consumer_key,
-            'consumer_secret': consumer_secret,
-            'access_token': access_token
+            'twitter_id': twitter_id,
+            'user_profile': user_profile
         }
 
     class Meta:
@@ -360,21 +413,18 @@ class TwitterLoginSerializer(serializers.Serializer):
     def create(self, validated_data):
         key = validated_data.get('key')
         secret = validated_data.get('secret')
-        consumer_secret = validated_data.get('consumer_secret')
-        consumer_key = validated_data.get('consumer_key')
+        fullname = validated_data.get('fullname')
+        email = validated_data.get('email')
+        twitter_id = validated_data.get('twitter_id')
+        username = validated_data.get('username')
 
-        url = "https://api.twitter.com/1.1/account/verify_credentials.json?&include_email=true"
-        auth = OAuth1(consumer_key, consumer_secret, key, secret)
-        r = requests.get(url=url, auth=auth)
-        twitter_data = r.json()
-        twitter_id = twitter_data.get('id')
-        fullname = twitter_data.get('name')
-        email = twitter_data.get('email')
-        username = twitter_data.get('screen_name') or email
         social_account = None
 
         try:
-            social_account = SocialAccount.objects.get(provider='twitter', social_id=twitter_id)
+            social_account = SocialAccount.objects.get(provider='twitter', social_id=twitter_id, authenticator=True)
+            social_account.social_secret = secret
+            social_account.social_token = key
+            social_account.save()
         except SocialAccount.DoesNotExist:
             user_profile_data = {
                 'username': username,
@@ -396,8 +446,11 @@ class TwitterLoginSerializer(serializers.Serializer):
         user_profile = social_account.user_profile
         access_token = generate_access_token(user_profile.user)
 
-        access_token_data = AccessTokenSerializer(access_token).data
-        self._data = access_token_data
+        user_data = UserSerializer(user_profile.user).data
+        self._data = {
+            "access_token": str(access_token),
+            'user': user_data,
+        }
 
         return user_profile
 
@@ -425,11 +478,33 @@ class TwitterLoginSerializer(serializers.Serializer):
         auth.request_token = request_token
         key, secret = auth.get_access_token(verifier)
 
+        url = "https://api.twitter.com/1.1/account/verify_credentials.json?&include_email=true"
+        auth = OAuth1(consumer_key, consumer_secret, key, secret)
+        r = requests.get(url=url, auth=auth)
+        twitter_data = r.json()
+        twitter_id = twitter_data.get('id')
+        fullname = twitter_data.get('name')
+        email = twitter_data.get('email')
+        try:
+            User.objects.get(email=email)
+            email = "%s@placeholder" % str(uuid.uuid4())
+        except User.DoesNotExist:
+            pass
+
+        username = twitter_data.get('screen_name') or email
+        try:
+            User.objects.get(username=username)
+            username = email
+        except User.DoesNotExist:
+            pass
+
         return {
             'key': key,
             'secret': secret,
-            'consumer_key': consumer_key,
-            'consumer_secret': consumer_secret
+            'twitter_id': twitter_id,
+            'fullname': fullname,
+            'email': email,
+            'username': username,
         }
 
     class Meta:
@@ -437,12 +512,11 @@ class TwitterLoginSerializer(serializers.Serializer):
 
 
 class AccessTokenSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
     expires = serializers.SerializerMethodField('_get_expires_timestamp')
 
     class Meta:
         model = AccessToken
-        fields = ('user', 'token', 'expires', 'scope')
+        fields = ('token', 'expires', 'scope')
 
     def _get_expires_timestamp(self, obj):
         return int(time.mktime(obj.expires.timetuple()))
@@ -458,9 +532,8 @@ class LoginSerializer(serializers.ModelSerializer):
         access_token = generate_access_token(user)
 
         user_data = UserSerializer(user).data
-        access_token_data = AccessTokenSerializer(access_token).data
         self._data = {
-            "access_token": access_token_data,
+            "access_token": str(access_token),
             'user': user_data,
         }
 

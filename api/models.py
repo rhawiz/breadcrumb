@@ -220,6 +220,10 @@ class SocialAccount(models.Model):
     social_token = models.CharField(max_length=255)
     social_secret = models.CharField(max_length=255, null=True, default=None)
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
+    authenticator = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = (("social_id", "user_profile", "provider"),)
 
     def __unicode__(self):
         return "{} ({})".format(self.user_profile.user.username, self.provider)
