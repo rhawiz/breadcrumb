@@ -35,19 +35,61 @@ class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
 
-
-class AccountList(generics.RetrieveUpdateDestroyAPIView):
-    queryset = SocialAccount.objects.all()
-    serializer_class = SocialAccountSerializer
+class CurrentUserDetail(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
     def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def retrieve(self, request, *args, **kwargs):
         token = request.META.get('HTTP_AUTHORIZATION', None)
-        data = {"access_token": token}
-        serializer = SocialAccountSerializer(data=data)
+        instance = get_user_profile_from_token(token)
+        serializer = UserProfileSerializer(instance)
+        return Response(serializer.data)
+
+
+    def put(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        instance = get_user_profile_from_token(token)
+
+        serializer = UpdateUserProfileSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+
+
+
+
+class AccountList(generics.ListAPIView):
+    queryset = SocialAccount.objects.all()
+    serializer_class = AccountSerializer
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        user_profile = get_user_profile_from_token(token)
+        social_account_list = SocialAccount.objects.filter(user_profile=user_profile)
+
+        queryset = [
+            {
+                'account': "web",
+                'name': "%s %s" % (user_profile.user.first_name, user_profile.user.last_name)
+            }
+        ]
+
+        for social_account in social_account_list:
+            data = {
+                'account': social_account.provider,
+                'name': social_account.social_username or "%s %s" % (
+                    user_profile.user.first_name, user_profile.user.last_name)
+            }
+            queryset.append(data)
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 
@@ -252,3 +294,43 @@ class TwitterCallback(APIView):
         serializer.save()
         response_data = serializer.data
         return Response(data=response_data)
+
+
+class AccountDetail(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        account_type = kwargs.get("account_type")
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        if account_type not in ('facebook', 'twitter', 'web'):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        user_profile = get_user_profile_from_token(token)
+
+        content_list = UserContent.objects.filter(user=user_profile, type=account_type)
+
+        positive = 0
+        negative = 0
+        neutral = 0
+
+        for content in content_list:
+            if content.pos_sentiment_rating:
+                positive += content.pos_sentiment_rating
+            if content.neg_sentiment_rating:
+                negative += content.neg_sentiment_rating
+            if content.neut_sentiment_rating:
+                neutral += content.neut_sentiment_rating
+
+        rating = positive+negative+neutral
+
+        data = {
+            'positive':positive,
+            'negative':negative,
+            'neutral':neutral,
+            'rating':rating,
+            }
+
+        serializer = AccountDetailSerializer(data)
+
+        return Response(serializer.data)

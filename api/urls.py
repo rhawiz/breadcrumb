@@ -19,7 +19,15 @@ urlpatterns = [
     url(r'^scan/', views.Scan.as_view(), name="scan"),
     url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 
-    url(r'^accounts/', views.AccountList.as_view(), name="user_accounts"),
+    url(r'^accounts/(?P<account_type>[^/]+)/', views.AccountDetail.as_view(), name="account_detail"),
+
+    url(r'^accounts/', views.AccountList.as_view(), name="account_list"),
+
+    url(r'^me/', views.CurrentUserDetail.as_view(), name="current_user_detail"),
+
+
+
+
 
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),
 

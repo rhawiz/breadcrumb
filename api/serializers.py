@@ -53,30 +53,27 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-class SocialAccountSerializer(serializers.ModelSerializer):
-    token = serializers.CharField(read_only=True)
+
+class AccountSerializer(serializers.Serializer):
+    account = serializers.CharField(required=True)
+    name = serializers.CharField(required=True)
 
     class Meta:
-        model = SocialAccount
         fields = (
-            'token',
+            'account', 'name'
         )
-        write_only_fields = ('password')
 
-    def create(self, validated_data):
-        user = User.objects.create(**validated_data)
-        user.set_password(validated_data.pop('password'))
-        user.save()
-        return user
 
-    def validate(self, data):
-        token = data.get("access_token")
-        if not token:
-            raise ValidationError(detail={'access_token': 'This field is required.'})
+class AccountDetailSerializer(serializers.Serializer):
+    positive = serializers.IntegerField()
+    negative = serializers.IntegerField()
+    neutral = serializers.IntegerField()
+    rating = serializers.CharField()
 
-        user = get_user_profile_from_token(token)
-        return
-
+    class Meta:
+        fields = (
+            'positive', 'negative', 'neutral', 'rating'
+        )
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -88,6 +85,30 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases')
+
+class UpdateUserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=False, write_only=True)
+    email = serializers.CharField(required=False, write_only=True)
+    first_name = serializers.CharField(required=False, write_only=True)
+    last_name = serializers.CharField(required=False, write_only=True)
+    aliases = serializers.ListField(required=False, write_only=True)
+
+
+    class Meta:
+        model = UserProfile
+        fields = ('username', 'email', 'first_name', 'last_name','aliases')
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            if hasattr(instance, attr):
+                setattr(instance, attr, value)
+            elif hasattr(instance.user, attr):
+                setattr(instance.user, attr, value)
+        instance.save()
+        instance.user.save()
+        self._data = UserProfileSerializer(instance).data
+        return instance
+
 
 
 class SignupSerializer(serializers.Serializer):
@@ -243,7 +264,6 @@ class FacebookLoginSerializer(serializers.Serializer):
         except User.DoesNotExist:
             pass
 
-
         return {
             'fb_id': fb_id,
             'name': fullname,
@@ -271,6 +291,7 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
                 social_id=fb_id,
                 user_profile=user_profile
             )
+            print social_account
         except SocialAccount.DoesNotExist:
             social_account = SocialAccount.objects.create(
                 user_profile=user_profile,
@@ -350,6 +371,7 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
         secret = validated_data.get('secret')
         twitter_id = validated_data.get('twitter_id')
         user_profile = validated_data.get('user_profile')
+        social_username = validated_data.get('social_username')
 
         social_account = None
         try:
@@ -364,6 +386,7 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
                 social_id=twitter_id,
                 social_token=key,
                 social_secret=secret,
+                social_username=social_username,
                 provider='twitter',
                 authenticator=False,
             )
@@ -419,12 +442,14 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
         twitter_data = r.json()
         twitter_id = twitter_data.get('id')
         user_profile = get_user_profile_from_token("Bearer %s" % access_token)
+        social_username = twitter_data.get('screen_name') or None
 
         return {
             'key': key,
             'secret': secret,
             'twitter_id': twitter_id,
-            'user_profile': user_profile
+            'user_profile': user_profile,
+            'social_username': social_username,
         }
 
     class Meta:
@@ -442,6 +467,7 @@ class TwitterLoginSerializer(serializers.Serializer):
         email = validated_data.get('email')
         twitter_id = validated_data.get('twitter_id')
         username = validated_data.get('username')
+        social_username = validated_data.get('social_username')
 
         social_account = None
 
@@ -461,6 +487,7 @@ class TwitterLoginSerializer(serializers.Serializer):
             user_profile_serializer.is_valid(raise_exception=True)
             user_profile = user_profile_serializer.save()
             social_account = SocialAccount.objects.create(
+                social_username=social_username,
                 user_profile=user_profile,
                 social_id=twitter_id,
                 social_token=key,
@@ -510,6 +537,8 @@ class TwitterLoginSerializer(serializers.Serializer):
         twitter_id = twitter_data.get('id')
         fullname = twitter_data.get('name')
         email = twitter_data.get('email')
+        social_username = twitter_data.get('screen_name') or None
+
         try:
             User.objects.get(email=email)
             email = "%s@bc.com" % str(uuid.uuid4())[:8]
@@ -530,6 +559,7 @@ class TwitterLoginSerializer(serializers.Serializer):
             'fullname': fullname,
             'email': email,
             'username': username,
+            'social_username': social_username,
         }
 
     class Meta:
