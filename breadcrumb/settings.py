@@ -102,7 +102,7 @@ TWITTER_CONSUMER_SECRET = '7nitL4Qo2LXilFySk4PPgwYOEZDXWxQIbC6bdS32fKQlSBah55'
 
 TWITTER_LOGIN_SESSION_KEY = None
 if ip == '104.155.75.17':
-    FACEBOOK_CALLBACK_URL = "http://104.155.75.17/api/facebook_callback/"
+    FACEBOOK_CALLBACK_URL = "http://104.155.75.17/api/facebook_callback/?format=json"
     TWITTER_CALLBACK_URL = "http://104.155.75.17/api/twitter_callback/"
     # SESSION_KEY = "1khxu7yfujbuis9273i9hepbx7f9878l"
     DATABASES = {
@@ -116,7 +116,7 @@ if ip == '104.155.75.17':
         }
     }
 else:
-    FACEBOOK_CALLBACK_URL = "http://localhost:8080/api/facebook_callback/"
+    FACEBOOK_CALLBACK_URL = "http://localhost:8080/api/facebook_callback/?format=json"
     TWITTER_CALLBACK_URL = "http://127.0.0.1:8080/api/twitter_callback/"
     # SESSION_KEY = "0baobuzgp8lr4k7dkfty60qzrej2oj3n"
     DATABASES = {
