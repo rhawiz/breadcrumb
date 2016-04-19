@@ -487,7 +487,7 @@ class TwitterLoginSerializer(serializers.Serializer):
         email = twitter_data.get('email')
         try:
             User.objects.get(email=email)
-            email = "%s@placeholder" % str(uuid.uuid4())
+            email = "%s@bc.com" % str(uuid.uuid4())[:8]
         except User.DoesNotExist:
             pass
 
