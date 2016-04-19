@@ -4,7 +4,7 @@ from importlib import import_module
 import sys
 import tweepy
 from django.contrib.sessions.backends.db import SessionStore
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
 from django.contrib.sessions.models import Session
 from rest_framework import generics
@@ -34,6 +34,21 @@ class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
+
+class AccountList(generics.RetrieveUpdateDestroyAPIView):
+    queryset = SocialAccount.objects.all()
+    serializer_class = SocialAccountSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        data = {"access_token": token}
+        serializer = SocialAccountSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
 
 
 class UserProfileList(generics.ListAPIView):

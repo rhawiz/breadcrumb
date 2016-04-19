@@ -53,6 +53,31 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class SocialAccountSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = SocialAccount
+        fields = (
+            'token',
+        )
+        write_only_fields = ('password')
+
+    def create(self, validated_data):
+        user = User.objects.create(**validated_data)
+        user.set_password(validated_data.pop('password'))
+        user.save()
+        return user
+
+    def validate(self, data):
+        token = data.get("access_token")
+        if not token:
+            raise ValidationError(detail={'access_token': 'This field is required.'})
+
+        user = get_user_profile_from_token(token)
+        return
+
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source='user.username')
@@ -214,7 +239,7 @@ class FacebookLoginSerializer(serializers.Serializer):
         email = user_info_response.get('email')
         try:
             User.objects.get(email=email)
-            email = "%s@placeholder" % str(uuid.uuid4())
+            email = "%s@bc.com" % str(uuid.uuid4())
         except User.DoesNotExist:
             pass
 

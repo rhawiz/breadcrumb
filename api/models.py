@@ -267,6 +267,7 @@ class UserContent(models.Model):
     pos_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
     neut_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
     sentiment_label = models.CharField(max_length=10, null=True, default=None)
+    hidden = models.BooleanField(default=False)
     extra_data = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

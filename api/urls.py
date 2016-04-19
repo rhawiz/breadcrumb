@@ -19,6 +19,8 @@ urlpatterns = [
     url(r'^scan/', views.Scan.as_view(), name="scan"),
     url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 
+    url(r'^accounts/', views.AccountList.as_view(), name="user_accounts"),
+
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),
 
 ]
