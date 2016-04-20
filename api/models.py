@@ -25,9 +25,8 @@ from breadcrumbcore.ai import sentimentanalyser
 from breadcrumbcore.utils.utils import get_hash8, random_hash8
 from breadcrumbcore.searchengines.googlesearch import GoogleImageSearch
 
-from PIL import Image as IMG
 
-from api import facial_recognition
+#from api import facial_recognition
 from breadcrumb import settings
 
 User._meta.get_field('email')._unique = True
@@ -59,10 +58,11 @@ class UserProfile(models.Model):
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
 
     def scan_all_content(self):
-        self._scan_images()
+
         self._scan_web_content()
         self._scan_facebook_content()
         self._scan_twitter_content()
+        self._scan_images()
 
     def _scan_facebook_content(self):
         try:
@@ -167,66 +167,67 @@ class UserProfile(models.Model):
                     print e
 
     def _scan_images(self):
-        model = facial_recognition.get_model()
-        if not model:
-            print "Could not find face recognition model"
-            return
-
-        fullname = "%s %s" % (self.user.first_name, self.user.last_name)
-
-        image_search = GoogleImageSearch(fullname, start=0, num=50, search_type="face")
-
-        attempts = 0
-
-        content_list = image_search.search()
-
-        while not len(content_list) and attempts <= 5:
-            content_list = image_search.search()
-            attempts += 1
-
-        for content in content_list:
-            print content
-            img_url = content.get("img_url") or None
-            if not img_url:
-                continue
-            temp_file = os.path.abspath("media\\temp\\%s.jpg" % str(uuid.uuid4()))
-            print temp_file
-            try:
-                urllib.urlretrieve(img_url, temp_file)
-                img = detect_face(temp_file)
-                img = img.convert("L")
-                os.remove(temp_file)
-            except Exception as e:
-                try:
-                    os.remove(temp_file)
-                except Exception as e:
-                    print e
-                continue
-            img = img.convert("L")
-            p = model.predict(img)
-            print p, str(self.pk)
-            if p == str(self.pk):
-                user = self
-                type = 'photo'
-                source = 'web'
-                source_content = content.get('text') or None
-                url = content.get('img_url', None)
-                extra_data = {"page_url": content.get('page_url')}
-                hashed_url = get_hash8(url)
-
-                try:
-                    UserContent.objects.get(hashed_url=hashed_url, hidden=False, user=user).soft_delete()
-                except UserContent.DoesNotExist:
-                    pass
-
-                try:
-                    UserContent.objects.create(
-                        user=user, type=type, source=source, content=source_content, url=url, hashed_url=hashed_url,
-                        extra_data=extra_data, hidden=False
-                    )
-                except Exception, e:
-                    print e
-        print "Image scan complete"
+        pass
+        # model = facial_recognition.get_model()
+        # if not model:
+        #     print "Could not find face recognition model"
+        #     return
+        #
+        # fullname = "%s %s" % (self.user.first_name, self.user.last_name)
+        #
+        # image_search = GoogleImageSearch(fullname, start=0, num=50, search_type="face")
+        #
+        # attempts = 0
+        #
+        # content_list = image_search.search()
+        #
+        # while not len(content_list) and attempts <= 5:
+        #     content_list = image_search.search()
+        #     attempts += 1
+        #
+        # for content in content_list:
+        #     print content
+        #     img_url = content.get("img_url") or None
+        #     if not img_url:
+        #         continue
+        #     temp_file = os.path.abspath("media\\temp\\%s.jpg" % str(uuid.uuid4()))
+        #     print temp_file
+        #     try:
+        #         urllib.urlretrieve(img_url, temp_file)
+        #         img = detect_face(temp_file)
+        #         img = img.convert("L")
+        #         os.remove(temp_file)
+        #     except Exception as e:
+        #         try:
+        #             os.remove(temp_file)
+        #         except Exception as e:
+        #             print e
+        #         continue
+        #     img = img.convert("L")
+        #     p = model.predict(img)
+        #     print p, str(self.pk)
+        #     if p == str(self.pk):
+        #         user = self
+        #         type = 'photo'
+        #         source = 'web'
+        #         source_content = content.get('text') or None
+        #         url = content.get('img_url', None)
+        #         extra_data = {"page_url": content.get('page_url')}
+        #         hashed_url = get_hash8(url)
+        #
+        #         try:
+        #             UserContent.objects.get(hashed_url=hashed_url, hidden=False, user=user).soft_delete()
+        #         except UserContent.DoesNotExist:
+        #             pass
+        #
+        #         try:
+        #             UserContent.objects.create(
+        #                 user=user, type=type, source=source, content=source_content, url=url, hashed_url=hashed_url,
+        #                 extra_data=extra_data, hidden=False
+        #             )
+        #         except Exception, e:
+        #             print e
+        # print "Image scan complete"
 
     def _scan_web_content(self):
         search_content = []
