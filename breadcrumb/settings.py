@@ -171,3 +171,6 @@ MEDIA_URL = '/media/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
+
+
+FACIAL_RECOGNITION_MODEL_PATH = "face_recognition_model.pkl"

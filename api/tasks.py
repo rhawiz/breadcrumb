@@ -16,11 +16,9 @@ def scan_user_content(user_profile_id):
     try:
         user_profile_uuid = uuid.UUID(user_profile_id).hex
         user_profile = UserProfile.objects.get(pk=user_profile_uuid)
-        print user_profile.user.username
     except UserProfile.DoesNotExist:
         print "Invalid UserProfile id"
         return None
-    print user_profile
     if isinstance(user_profile, UserProfile):
         print "Scanning user content..."
         user_profile.scan_all_content()

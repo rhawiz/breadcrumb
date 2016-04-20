@@ -11,6 +11,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from api.exceptions import *
 from rest_framework.exceptions import *
+
+from api.facial_recognition import update_face_rec_model
 from api.models import *
 from rest_framework.utils import model_meta
 
@@ -659,14 +661,24 @@ class UploadImageSerializer(serializers.ModelSerializer):
         if not os.path.exists(file_path):
             os.mkdir(file_path)
         name = validated_data.get('name') or file_name.split(".")[0]
-        fh = open("{}/{}".format(file_path, file_name), "wb")
+
+        file_path = "%s/%s" % (file_path, file_name)
+        fh = open(file_path, "wb")
+
         fh.write(image_base64.decode('base64'))
         fh.close()
         url = "{}users/{}/{}".format(settings.MEDIA_URL, user_profile.id, file_name)
-        image = Image.objects.create(user_profile=user_profile, url=url, name=name)
+        local_path = os.path.abspath(file_path)
+        image = Image.objects.create(user_profile=user_profile, url=url, name=name, local_path=local_path)
         self._data = {
-            "url": url
+            'url': url,
+            'name': name,
         }
+
+        try:
+            update_face_rec_model(local_path, user_profile.id)
+        except Exception as e:
+            print e
 
         return image
 
