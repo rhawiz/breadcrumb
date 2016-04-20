@@ -7,8 +7,7 @@ import urllib
 from multiprocessing import Process
 from time import sleep
 
-import PIL
-from breadcrumbcore.ai.facialrecognition import detect_face
+#from breadcrumbcore.ai.facialrecognition import detect_face
 from breadcrumbcore.contentcollectors.twittercollector import TwitterCollector
 from breadcrumbcore.contentcollectors.webcollector import WebCollector
 from breadcrumbcore.contentcollectors.facebookcollector import FacebookCollector
