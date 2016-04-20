@@ -50,9 +50,9 @@ class UserProfile(models.Model):
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
 
     def scan_all_content(self):
+        self._scan_web_content()
         self._scan_facebook_content()
         self._scan_twitter_content()
-        self._scan_web_content()
 
     def _scan_facebook_content(self):
         try:
@@ -159,11 +159,14 @@ class UserProfile(models.Model):
     def _scan_web_content(self):
         search_content = []
 
-        fullname = "{} {}".format(self.user.first_name, self.user.last_name)
+        fullname = "%s %s" % (self.user.first_name, self.user.last_name)
         aliases = self.aliases or []
         for alias in aliases:
             search_query = "{} {}".format(fullname, alias)
             search_content.append(search_query)
+
+        if not search_content:
+            search_content.append(fullname)
 
         print search_content
 
@@ -189,7 +192,7 @@ class UserProfile(models.Model):
             extra_data = json.dumps(user_content.get('relevant_content'))
 
             try:
-                UserContent.objects.get(hashed_url=hashed_url).delete()
+                UserContent.objects.get(hashed_url=hashed_url, hidden=False, user=user).soft_delete()
             except UserContent.DoesNotExist:
                 pass
 
@@ -197,7 +200,8 @@ class UserProfile(models.Model):
                 UserContent.objects.create(
                     user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data
+                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data,
+                    hidden=False,
                 )
             except Exception, e:
                 print e
@@ -259,10 +263,10 @@ class UserContent(models.Model):
     )
 
     user = models.ForeignKey(UserProfile)
-    type = models.CharField(max_length=32, choices=TYPE_CHOICES)
-    source = models.CharField(max_length=32, choices=SOURCE_CHOICES)
+    type = models.CharField(max_length=32, choices=TYPE_CHOICES, default=TYPE_OTHER)
+    source = models.CharField(max_length=32, choices=SOURCE_CHOICES, null=True, default=None)
     content = models.TextField(null=True)
-    url = models.CharField(max_length=255)
+    url = models.CharField(max_length=255, null=True, default=None)
     hashed_url = models.CharField(unique=True, max_length=32, default=None)
     neg_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
     pos_sentiment_rating = models.DecimalField(null=True, blank=True, decimal_places=3, default=None, max_digits=3)
@@ -272,6 +276,13 @@ class UserContent(models.Model):
     extra_data = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def soft_delete(self):
+        self.hidden=True
+        self.save()
+
+    class Meta:
+        unique_together = (("hashed_url", "hidden", "user"),)
 
     def __unicode__(self):
         return "{} - {}".format(self.user.user.username, self.source)

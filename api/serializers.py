@@ -86,10 +86,34 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases')
 
+
 class ContentSerializer(serializers.ModelSerializer):
+    created_at_timestamp = serializers.SerializerMethodField('_get_expires_timestamp')
+    sentiment = serializers.SerializerMethodField('_get_sentiment')
+
     class Meta:
         model = UserContent
-        fields = ('id', 'created_at', 'source')
+        fields = ('id', 'content', 'created_at_timestamp', 'type', 'source', 'url', 'sentiment',
+                  'neg_sentiment_rating', 'pos_sentiment_rating', 'neut_sentiment_rating', 'sentiment_label')
+
+        extra_kwargs = {
+            'neg_sentiment_rating': {'write_only': True},
+            'pos_sentiment_rating': {'write_only': True},
+            'neut_sentiment_rating': {'write_only': True},
+            'sentiment_label': {'write_only': True},
+        }
+
+    def _get_expires_timestamp(self, obj):
+        return int(time.mktime(obj.created_at.timetuple()))
+
+    def _get_sentiment(self, obj):
+        return {
+            "neg": obj.neg_sentiment_rating,
+            "pos": obj.pos_sentiment_rating,
+            "neut": obj.neut_sentiment_rating,
+            "label": obj.sentiment_label,
+        }
+
 
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, write_only=True)
@@ -98,10 +122,9 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(required=False, write_only=True)
     aliases = serializers.ListField(required=False, write_only=True)
 
-
     class Meta:
         model = UserProfile
-        fields = ('username', 'email', 'first_name', 'last_name','aliases')
+        fields = ('username', 'email', 'first_name', 'last_name', 'aliases')
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
@@ -113,7 +136,6 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
         instance.user.save()
         self._data = UserProfileSerializer(instance).data
         return instance
-
 
 
 class SignupSerializer(serializers.Serializer):
@@ -668,5 +690,3 @@ class UploadImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ('name', 'url', 'access_token', 'image_base64')
-
-

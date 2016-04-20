@@ -35,6 +35,7 @@ class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
 
+
 class CurrentUserDetail(APIView):
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
@@ -44,7 +45,6 @@ class CurrentUserDetail(APIView):
         instance = get_user_profile_from_token(token)
         serializer = UserProfileSerializer(instance)
         return Response(serializer.data)
-
 
     def put(self, request, *args, **kwargs):
         token = request.META.get('HTTP_AUTHORIZATION', None)
@@ -110,7 +110,8 @@ class Scan(APIView):
         user_profile = get_user_profile_from_token(token)
         try:
             scan_user_content.delay(str(user_profile.pk))
-        except Exception:
+        except Exception, e:
+            print e
             scan_user_content(str(user_profile.pk))
 
         return Response(status=status.HTTP_200_OK)
@@ -322,34 +323,54 @@ class AccountDetail(APIView):
             if content.neut_sentiment_rating:
                 neutral += content.neut_sentiment_rating
 
-        rating = positive+negative+neutral
+        rating = positive + negative + neutral
 
         data = {
-            'positive':positive,
-            'negative':negative,
-            'neutral':neutral,
-            'rating':rating,
-            }
+            'positive': positive,
+            'negative': negative,
+            'neutral': neutral,
+            'rating': rating,
+        }
 
         serializer = AccountDetailSerializer(data)
 
         return Response(serializer.data)
 
-class ContentList(APIView):
+
+class ContentList(generics.ListAPIView):
+    queryset = UserContent.objects.all()
+    serializers_class = ContentSerializer
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
     def get(self, request, *args, **kwargs):
         content_type = kwargs.get("content_type") or None
-        if content_type not in ('facebook','twitter','web'):
+        if content_type not in ('facebook', 'twitter', 'web'):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         token = request.META.get('HTTP_AUTHORIZATION', None)
         user_profile = get_user_profile_from_token(token)
 
-        queryset = UserContent.objects.filter(user=user_profile, source=content_type)
+        queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False)
 
-        serializer = ContentSerializer(queryset)
-        print serializer.data
+        serializer = self.get_serializer(queryset, many=True)
 
         return Response(data=serializer.data)
+
+
+class ContentDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = UserContent.objects.all()
+    serializer_class = ContentSerializer
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.soft_delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -27,6 +27,8 @@ urlpatterns = [
     url(r'^content/twitter/', views.ContentList.as_view(), name="twitter_content_list", kwargs={'content_type':"twitter"}),
     url(r'^content/web/', views.ContentList.as_view(), name="web_content_list", kwargs={'content_type':"web"}),
 
+    url(r'^content/(?P<pk>[^/]+)/$', views.ContentDetail.as_view(), name="content_detail"),
+
     url(r'^me/', views.CurrentUserDetail.as_view(), name="current_user_detail"),
 
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),
