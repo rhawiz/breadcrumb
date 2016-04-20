@@ -56,10 +56,6 @@ class CurrentUserDetail(APIView):
         return Response(serializer.data)
 
 
-
-
-
-
 class AccountList(generics.ListAPIView):
     queryset = SocialAccount.objects.all()
     serializer_class = AccountSerializer
@@ -112,7 +108,11 @@ class Scan(APIView):
     def post(self, request, *args, **kwargs):
         token = request.META.get('HTTP_AUTHORIZATION', None)
         user_profile = get_user_profile_from_token(token)
-        scan_user_content.delay(str(user_profile.pk))
+        try:
+            scan_user_content.delay(str(user_profile.pk))
+        except Exception:
+            scan_user_content(str(user_profile.pk))
+
         return Response(status=status.HTTP_200_OK)
 
 
@@ -334,3 +334,22 @@ class AccountDetail(APIView):
         serializer = AccountDetailSerializer(data)
 
         return Response(serializer.data)
+
+class ContentList(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        content_type = kwargs.get("content_type") or None
+        if content_type not in ('facebook','twitter','web'):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        user_profile = get_user_profile_from_token(token)
+
+        queryset = UserContent.objects.filter(user=user_profile, source=content_type)
+
+        serializer = ContentSerializer(queryset)
+        print serializer.data
+
+        return Response(data=serializer.data)

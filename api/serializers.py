@@ -86,6 +86,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases')
 
+class ContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserContent
+        fields = ('id', 'created_at', 'source')
+
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, write_only=True)
     email = serializers.CharField(required=False, write_only=True)
@@ -663,3 +668,5 @@ class UploadImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ('name', 'url', 'access_token', 'image_base64')
+
+

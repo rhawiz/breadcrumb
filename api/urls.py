@@ -23,11 +23,11 @@ urlpatterns = [
 
     url(r'^accounts/', views.AccountList.as_view(), name="account_list"),
 
+    url(r'^content/facebook/', views.ContentList.as_view(), name="facebook_content_list", kwargs={'content_type':"facebook"}),
+    url(r'^content/twitter/', views.ContentList.as_view(), name="twitter_content_list", kwargs={'content_type':"twitter"}),
+    url(r'^content/web/', views.ContentList.as_view(), name="web_content_list", kwargs={'content_type':"web"}),
+
     url(r'^me/', views.CurrentUserDetail.as_view(), name="current_user_detail"),
-
-
-
-
 
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),
 
