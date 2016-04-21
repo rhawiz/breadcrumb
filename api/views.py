@@ -402,7 +402,6 @@ class Insights(APIView):
         insight_list = []
         print len(trend_list)
         for trend in trend_list:
-            sleep(uniform(0.5, 0.9))
             tweets = []
             tag = trend["name"]
             tweet_volume = trend["tweet_volume"]
