@@ -29,7 +29,15 @@ urlpatterns = [
 
     url(r'^content/(?P<pk>[^/]+)/$', views.ContentDetail.as_view(), name="content_detail"),
 
+    url(r'^takedown/(?P<pk>[^/]+)/$', views.TakedownPost.as_view(), name="takedown_post"),
+
+    url(r'^insights/$', views.Insights.as_view(), name="insights"),
+
     url(r'^me/', views.CurrentUserDetail.as_view(), name="current_user_detail"),
+
+
+
+
 
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),
 

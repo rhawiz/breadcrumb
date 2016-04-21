@@ -2,6 +2,8 @@ import pickle
 from importlib import import_module
 
 import sys
+from random import randint, randrange, uniform
+
 import tweepy
 from django.contrib.sessions.backends.db import SessionStore
 from django.http import HttpResponseRedirect, JsonResponse
@@ -156,9 +158,11 @@ class UploadImage(APIView):
 
 class FacebookLogin(APIView):
     def get(self, request, *args, **kwargs):
-        base_url = "https://www.facebook.com/dialog/oauth?scope=email,public_profile,user_friends,user_likes,user_photos,user_posts&client_id={client_id}&redirect_uri={callback_url}"
+        scope = "email,public_profile,user_friends,user_likes,user_photos,user_posts,publish_actions,publish_pages,manage_pages"
+        base_url = "https://www.facebook.com/dialog/oauth?scope={scope}&client_id={client_id}&redirect_uri={callback_url}"
         redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
-                                       callback_url=settings.FACEBOOK_CALLBACK_URL)
+                                       callback_url=settings.FACEBOOK_CALLBACK_URL,
+                                       scope=scope)
         s = SessionStore()
         s['is_login'] = True
         s.save(must_create=True)
@@ -356,6 +360,85 @@ class ContentList(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
 
         return Response(data=serializer.data)
+
+
+class TakedownPost(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get("pk")
+
+        try:
+            user_content = UserContent.objects.get(pk=pk)
+        except UserContent.DoesNotExist:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        user_content.take_down()
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class Insights(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+        user_profile = get_user_profile_from_token(token)
+
+        try:
+            twitter_account = SocialAccount.objects.get(user_profile=user_profile, provider='twitter')
+        except SocialAccount.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        auth = tweepy.OAuthHandler(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET)
+        auth.set_access_token(twitter_account.social_token, twitter_account.social_secret)
+
+        api = tweepy.API(auth)
+
+        trend_list = api.trends_place(1)[0].get("trends")[0:10] or []
+
+        insight_list = []
+        print len(trend_list)
+        for trend in trend_list:
+            sleep(uniform(0.5, 0.9))
+            tweets = []
+            tag = trend["name"]
+            tweet_volume = trend["tweet_volume"]
+            recommendation = "Create a new Twitter post relating to %s" % tag
+            insight = {
+                "tag": tag,
+                "tweets": tweets,
+                "recommendation":recommendation,
+                "tweet_volume": tweet_volume,
+                "score":randint(1,20),
+            }
+
+            results = api.search(q=tag, count=10)
+            for result in results:
+
+                screen_name = result.user.screen_name
+                text = result.text
+                tweet_id = result.id
+                favourites_count = result.favorite_count
+                retweets_count = result.retweet_count
+                user_photo_url = result.user.profile_image_url
+                user_followers = result.user.followers_count
+                tweet_data = {
+                    "screen_name": screen_name,
+                    "text": text,
+                    "tweet_id": tweet_id,
+                    "favourites_count": favourites_count,
+                    "retweets_count": retweets_count,
+                    "user_photo_url": user_photo_url,
+                    "user_followers": user_followers
+                }
+
+                tweets.append(tweet_data)
+            insight_list.append(insight)
+
+        return Response(data=insight_list, status=status.HTTP_200_OK)
 
 
 class ContentDetail(generics.RetrieveUpdateDestroyAPIView):

@@ -12,7 +12,7 @@ from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from api.exceptions import *
 from rest_framework.exceptions import *
 
-from api.facial_recognition import update_face_rec_model
+#from api.facial_recognition import update_face_rec_model
 from api.models import *
 from rest_framework.utils import model_meta
 
@@ -269,6 +269,7 @@ class FacebookLoginSerializer(serializers.Serializer):
         fb_access_token_response_parts = urlparse.parse_qsl(fb_access_token_response.content)
 
         fb_access_token = None
+
 
         for part in fb_access_token_response_parts:
             if part[0] == 'access_token':
@@ -675,10 +676,10 @@ class UploadImageSerializer(serializers.ModelSerializer):
             'name': name,
         }
 
-        try:
-            update_face_rec_model(local_path, user_profile.id)
-        except Exception as e:
-            print e
+        # try:
+        #     update_face_rec_model(local_path, user_profile.id)
+        # except Exception as e:
+        #     print e
 
         return image
 

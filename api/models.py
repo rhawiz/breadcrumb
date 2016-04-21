@@ -7,7 +7,9 @@ import urllib
 from multiprocessing import Process
 from time import sleep
 
-#from breadcrumbcore.ai.facialrecognition import detect_face
+# from breadcrumbcore.ai.facialrecognition import detect_face
+import requests
+import tweepy
 from breadcrumbcore.contentcollectors.twittercollector import TwitterCollector
 from breadcrumbcore.contentcollectors.webcollector import WebCollector
 from breadcrumbcore.contentcollectors.facebookcollector import FacebookCollector
@@ -24,8 +26,9 @@ from breadcrumbcore.ai import sentimentanalyser
 from breadcrumbcore.utils.utils import get_hash8, random_hash8
 from breadcrumbcore.searchengines.googlesearch import GoogleImageSearch
 
+# from api import facial_recognition
+from requests_oauthlib import OAuth1
 
-#from api import facial_recognition
 from breadcrumb import settings
 
 User._meta.get_field('email')._unique = True
@@ -57,10 +60,9 @@ class UserProfile(models.Model):
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
 
     def scan_all_content(self):
-
-        self._scan_web_content()
-        self._scan_facebook_content()
         self._scan_twitter_content()
+        self._scan_facebook_content()
+        self._scan_web_content()
         self._scan_images()
 
     def _scan_facebook_content(self):
@@ -133,6 +135,7 @@ class UserProfile(models.Model):
             source = 'twitter'
             content = item['text']
             url = item['url']
+            post_id = item['id']
             hashed_url = get_hash8(url)
             if len(UserContent.objects.filter(hashed_url=hashed_url)) == 0:
                 sentiment_analysis = item.get('analysis', None)
@@ -143,7 +146,6 @@ class UserProfile(models.Model):
 
                 if not sentiment_analysis:
                     try:
-                        print content
                         sentiment_analysis = sentimentanalyser.analyse_text(content)
                     except Exception:
                         pass
@@ -154,12 +156,15 @@ class UserProfile(models.Model):
                     neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
                     sentiment_label = sentiment_analysis.get('label')
 
+                extra_data = {'id': post_id}
+
                 try:
                     print "creating content"
                     content = UserContent.objects.create(
                         user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                         neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label
+                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
+                        extra_data=extra_data,
                     )
                     print content
                 except Exception, e:
@@ -262,11 +267,6 @@ class UserProfile(models.Model):
             extra_data = json.dumps(user_content.get('relevant_content'))
 
             try:
-                UserContent.objects.get(hashed_url=hashed_url, hidden=False, user=user).soft_delete()
-            except UserContent.DoesNotExist:
-                pass
-
-            try:
                 UserContent.objects.create(
                     user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
@@ -348,12 +348,35 @@ class UserContent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def take_down(self):
+        if self.source == 'facebook':
+            pass
+        elif self.source == 'twitter':
+            if self.extra_data:
+                post_id = self.extra_data.get('id') or None
+                try:
+                    twitter_account = SocialAccount.objects.get(user_profile=self.user, provider='twitter')
+                except SocialAccount.DoesNotExist:
+                    return None
+                if post_id:
+                    auth = tweepy.OAuthHandler(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET)
+                    auth.set_access_token(twitter_account.social_token, twitter_account.social_secret)
+
+                    try:
+                        api = tweepy.API(auth)
+                        api.destroy_status(post_id)
+                        self.soft_delete()
+                    except Exception as e:
+                        print e
+        else:
+            pass
+
     def soft_delete(self):
         self.hidden = True
         self.save()
 
     class Meta:
-        unique_together = (("hashed_url", "hidden", "user"),)
+        unique_together = (("hashed_url", "user"),)
 
     def __unicode__(self):
         return "{} - {}".format(self.user.user.username, self.source)
