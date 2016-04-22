@@ -292,7 +292,7 @@ class FacebookLoginSerializer(serializers.Serializer):
         email = user_info_response.get('email')
         try:
             User.objects.get(email=email)
-            email = "%s@bc.com" % str(uuid.uuid4())
+            email = "%s@bc.com" % str(uuid.uuid4())[:8]
         except User.DoesNotExist:
             pass
 
@@ -325,7 +325,6 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
                 social_id=fb_id,
                 user_profile=user_profile
             )
-            print social_account
         except SocialAccount.DoesNotExist:
             social_account = SocialAccount.objects.create(
                 user_profile=user_profile,
@@ -462,13 +461,6 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
         )
         auth.request_token = request_token
         key, secret = auth.get_access_token(verifier)
-
-        # if len(SocialAccount.objects.filter(provider='twitter', social_token=key)) >= 1:
-        #     raise ValidationError(detail={"social_token": "Social token in use."})
-        #
-        # if len(SocialAccount.objects.filter(provider='twitter', social_secret=secret)) >= 1:
-        #     raise ValidationError(detail={"social_secret": "Secret key in use."})
-
 
         try:
             AccessToken.objects.get(token=access_token)
