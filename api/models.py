@@ -55,6 +55,8 @@ class UserProfile(models.Model):
 
     aliases = JSONField(null=True, blank=True)
 
+    avatar = models.ImageField(null=True, blank=True)
+
     web_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
     facebook_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)

@@ -95,7 +95,7 @@ class ProfileDetail(APIView):
             "negative": float("%.3f" % neg_norm)
         }
 
-        return Response(data=data,status=status.HTTP_200_OK)
+        return Response(data=data, status=status.HTTP_200_OK)
 
 
 class AccountList(generics.ListAPIView):
@@ -418,13 +418,32 @@ class ContentList(generics.ListAPIView):
 
     def get(self, request, *args, **kwargs):
         content_type = kwargs.get("content_type") or None
+
         if content_type not in ('facebook', 'twitter', 'web'):
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        sentiment = request.GET.get("sentiment") or None
+        page = request.GET.get("page") or None
+
+        page = int(page)
+
+        if not isinstance(page, int):
+            page = 0
+
+        start = page * 10
+        end = start + 10
+
+        if sentiment not in ("pos", "neg", "neutral"):
+            sentiment = None
 
         token = request.META.get('HTTP_AUTHORIZATION', None)
         user_profile = get_user_profile_from_token(token)
 
-        queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False)
+        if sentiment:
+            queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False)[start:end]
+        else:
+            queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False,
+                                                  sentiment_label=sentiment)[start:end]
 
         serializer = self.get_serializer(queryset, many=True)
 
