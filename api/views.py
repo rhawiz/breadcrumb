@@ -380,7 +380,7 @@ class TakedownPost(APIView):
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
-    def post(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
 
         try:
