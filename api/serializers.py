@@ -213,6 +213,7 @@ class FacebookLoginSerializer(serializers.Serializer):
         try:
             social_account = SocialAccount.objects.get(provider='facebook', social_id=fb_id, authenticator=True)
             social_account.social_token = fb_access_token
+            social_account.social_username = fullname
             social_account.save()
         except SocialAccount.DoesNotExist:
             user_profile_data = {
@@ -226,6 +227,7 @@ class FacebookLoginSerializer(serializers.Serializer):
             user_profile_serializer.is_valid(raise_exception=True)
             user_profile = user_profile_serializer.save()
             social_account = SocialAccount.objects.create(user_profile=user_profile,
+                                                          social_username=fullname,
                                                           social_id=fb_id,
                                                           social_token=fb_access_token,
                                                           provider='facebook',

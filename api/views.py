@@ -402,7 +402,6 @@ class Insights(APIView):
         trend_list = api.trends_place(1)[0].get("trends")[0:10] or []
 
         insight_list = []
-        print len(trend_list)
         for trend in trend_list:
             tweets = []
             tag = trend["name"]
