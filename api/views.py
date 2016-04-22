@@ -423,7 +423,8 @@ class ContentList(generics.ListAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         sentiment = request.GET.get("sentiment") or None
-        page = request.GET.get("page") or None
+        page = request.GET.get("page") or 0
+
 
         page = int(page)
 
