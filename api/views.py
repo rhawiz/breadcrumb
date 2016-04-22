@@ -318,9 +318,9 @@ class AccountDetail(APIView):
 
         content_list = UserContent.objects.filter(user=user_profile, type=account_type)
 
-        pos = 0
-        neg = 0
-        neut = 0
+        pos = 0.0
+        neg = 0.0
+        neut = 0.0
 
         for content in content_list:
             if content.pos_sentiment_rating:
@@ -332,8 +332,11 @@ class AccountDetail(APIView):
 
         total = pos + neg
 
-        ppos = (pos / total)
-        pneg = (neg / total)
+        ppos = 0.0
+        pneg = 0.0
+        if total:
+            ppos = (pos / total)
+            pneg = (neg / total)
 
         pos_norm = ppos * 900
         neg_norm = pneg * 900
