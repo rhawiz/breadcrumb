@@ -476,6 +476,7 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
         user_profile = get_user_profile_from_token("Bearer %s" % access_token)
         social_username = twitter_data.get('screen_name') or None
 
+
         return {
             'key': key,
             'secret': secret,
