@@ -142,6 +142,17 @@ class Login(APIView):
         login_serializer.save()
         return Response(data=login_serializer.data)
 
+class Logout(APIView):
+    queryset = AccessToken.objects.all()
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def post(self, request, *args, **kwargs):
+        access_token = request.META.get('HTTP_AUTHORIZATION', None).split(' ')[1]
+        access_token_obj = AccessToken.objects.get(token=access_token)
+        access_token_obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class UploadImage(APIView):
     authentication_classes = (OAuth2Authentication,)
@@ -184,6 +195,19 @@ class LinkFacebookAccount(APIView):
         s = SessionStore()
         s['is_login'] = False
         s['access_token'] = kwargs.get("access_token")
+        s.save(must_create=True)
+        try:
+            return HttpResponseRedirect(redirect_url)
+        except Exception:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, *args, **kwargs):
+        base_url = "https://www.facebook.com/dialog/oauth?scope=email,public_profile,user_friends,user_likes,user_photos,user_posts&client_id={client_id}&redirect_uri={callback_url}"
+        redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
+                                       callback_url=settings.FACEBOOK_CALLBACK_URL)
+        s = SessionStore()
+        s['is_login'] = False
+        s['access_token'] = request.META.get('HTTP_AUTHORIZATION', None)
         s.save(must_create=True)
         try:
             return HttpResponseRedirect(redirect_url)
@@ -344,7 +368,7 @@ class AccountDetail(APIView):
 
 class ContentList(generics.ListAPIView):
     queryset = UserContent.objects.all()
-    serializers_class = ContentSerializer
+    serializer_class = ContentSerializer
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
@@ -367,7 +391,7 @@ class TakedownPost(APIView):
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
 
         try:

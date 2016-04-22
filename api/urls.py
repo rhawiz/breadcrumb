@@ -9,13 +9,15 @@ urlpatterns = [
     # Session
     url(r'^signup/$', views.Signup.as_view(), name="signup"),
     url(r'^login/$', views.Login.as_view(), name="login"),
+    url(r'^logout/$', views.Logout.as_view(), name="logout"),
     url(r'^facebook_callback/', views.FacebookCallback.as_view(), name="facebook_callback"),
     url(r'^twitter_callback/', views.TwitterCallback.as_view(), name="twitter_callback"),
     url(r'^twitter_login/', views.TwitterLogin.as_view(), name="twitter_login"),
     url(r'^facebook_login/', views.FacebookLogin.as_view(), name="facebook_login"),
     url(r'^link_twitter/(?P<access_token>[^/]+)/$', views.LinkTwitterAccount.as_view(), name="link_twitter_get"),
     url(r'^link_twitter/$', views.LinkTwitterAccount.as_view(), name="link_twitter_post"),
-    url(r'^link_facebook/(?P<access_token>[^/]+)/$', views.LinkFacebookAccount.as_view(), name="link_facebook"),
+    url(r'^link_facebook/(?P<access_token>[^/]+)/$', views.LinkFacebookAccount.as_view(), name="link_facebook_get"),
+    url(r'^link_facebook/$', views.LinkFacebookAccount.as_view(), name="link_facebook_post"),
     url(r'^scan/', views.Scan.as_view(), name="scan"),
     url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 
