@@ -364,11 +364,11 @@ class AccountDetail(APIView):
 
         for content in content_list:
             if content.pos_sentiment_rating:
-                pos += content.pos_sentiment_rating
+                pos += float(content.pos_sentiment_rating)
             if content.neg_sentiment_rating:
-                neg += content.neg_sentiment_rating
+                neg += float(content.neg_sentiment_rating)
             if content.neut_sentiment_rating:
-                neut += content.neut_sentiment_rating
+                neut += float(content.neut_sentiment_rating)
 
         total = pos + neg + neut
 
