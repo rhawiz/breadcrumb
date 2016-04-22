@@ -425,7 +425,6 @@ class ContentList(generics.ListAPIView):
         sentiment = request.GET.get("sentiment") or None
         page = request.GET.get("page") or 0
 
-
         page = int(page)
 
         if not isinstance(page, int):
@@ -441,10 +440,10 @@ class ContentList(generics.ListAPIView):
         user_profile = get_user_profile_from_token(token)
 
         if sentiment:
-            queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False)[start:end]
-        else:
             queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False,
                                                   sentiment_label=sentiment)[start:end]
+        else:
+            queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False)[start:end]
 
         serializer = self.get_serializer(queryset, many=True)
 
