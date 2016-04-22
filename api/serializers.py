@@ -316,6 +316,8 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
         fb_access_token = validated_data.get('fb_access_token', None)
         user_profile = validated_data.get('user_profile', None)
         fb_id = validated_data.get('fb_id', None)
+        fullname = validated_data.get('fullname', None)
+
 
         try:
             social_account = SocialAccount.objects.get(
@@ -330,7 +332,9 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
                 social_id=fb_id,
                 social_token=fb_access_token,
                 provider='facebook',
-                authenticator=False
+                authenticator=False,
+                social_username=fullname,
+
             )
 
         self._data = {
@@ -386,11 +390,14 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
 
         user_info_response = r.get(user_info_url).json()
         fb_id = user_info_response.get('id')
+        fullname = user_info_response.get('name')
         user_profile = get_user_profile_from_token("Bearer %s" % access_token)
 
         return {'fb_access_token': fb_access_token,
                 'user_profile': user_profile,
-                'fb_id': fb_id}
+                'fb_id': fb_id,
+                'fullname': fullname,
+                }
 
 
 class LinkTwitterAccountSerializer(serializers.Serializer):
