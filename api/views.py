@@ -142,6 +142,7 @@ class Login(APIView):
         login_serializer.save()
         return Response(data=login_serializer.data)
 
+
 class Logout(APIView):
     queryset = AccessToken.objects.all()
     authentication_classes = (OAuth2Authentication,)
@@ -317,24 +318,32 @@ class AccountDetail(APIView):
 
         content_list = UserContent.objects.filter(user=user_profile, type=account_type)
 
-        positive = 0
-        negative = 0
-        neutral = 0
+        pos = 0
+        neg = 0
+        neut = 0
 
         for content in content_list:
             if content.pos_sentiment_rating:
-                positive += content.pos_sentiment_rating
+                pos += content.pos_sentiment_rating
             if content.neg_sentiment_rating:
-                negative += content.neg_sentiment_rating
+                neg += content.neg_sentiment_rating
             if content.neut_sentiment_rating:
-                neutral += content.neut_sentiment_rating
+                neut += content.neut_sentiment_rating
 
-        rating = positive + negative + neutral
+        total = pos + neg
+
+        ppos = (pos / total)
+        pneg = (neg / total)
+
+        pos_norm = ppos * 900
+        neg_norm = pneg * 900
+
+        rating = pos + neg + neut
 
         data = {
-            'positive': positive,
-            'negative': negative,
-            'neutral': neutral,
+            'positive': pos,
+            'negative': neg,
+            'neutral': neut,
             'rating': rating,
         }
 
@@ -410,14 +419,13 @@ class Insights(APIView):
             insight = {
                 "tag": tag,
                 "tweets": tweets,
-                "recommendation":recommendation,
+                "recommendation": recommendation,
                 "tweet_volume": tweet_volume,
-                "score":randint(1,20),
+                "score": randint(1, 20),
             }
 
             results = api.search(q=tag, count=10)
             for result in results:
-
                 screen_name = result.user.screen_name
                 text = result.text
                 tweet_id = result.id

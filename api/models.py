@@ -293,7 +293,7 @@ class SocialAccount(models.Model):
     social_id = models.CharField(max_length=255)
     social_token = models.CharField(max_length=255)
     social_username = models.CharField(max_length=255, blank=True, null=True, default=None)
-    social_secret = models.CharField(max_length=255, null=True, default=None)
+    social_secret = models.CharField(max_length=255, blank=True, null=True, default=None)
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
     authenticator = models.BooleanField(default=False)
 
