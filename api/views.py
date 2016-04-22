@@ -194,20 +194,10 @@ class LinkFacebookAccount(APIView):
                                        callback_url=settings.FACEBOOK_CALLBACK_URL)
         s = SessionStore()
         s['is_login'] = False
-        s['access_token'] = kwargs.get("access_token")
-        s.save(must_create=True)
-        try:
-            return HttpResponseRedirect(redirect_url)
-        except Exception:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def post(self, request, *args, **kwargs):
-        base_url = "https://www.facebook.com/dialog/oauth?scope=email,public_profile,user_friends,user_likes,user_photos,user_posts&client_id={client_id}&redirect_uri={callback_url}"
-        redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
-                                       callback_url=settings.FACEBOOK_CALLBACK_URL)
-        s = SessionStore()
-        s['is_login'] = False
-        s['access_token'] = request.META.get('HTTP_AUTHORIZATION', None)
+        access_token = kwargs.get("access_token") or None
+        if not access_token:
+            access_token = request.META.get('HTTP_AUTHORIZATION', None)
+        s['access_token'] = access_token
         s.save(must_create=True)
         try:
             return HttpResponseRedirect(redirect_url)
@@ -242,22 +232,6 @@ class LinkTwitterAccount(APIView):
 
     # permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
-    def post(self, request, *args, **kwargs):
-        auth = tweepy.OAuthHandler(
-            settings.TWITTER_CONSUMER_KEY,
-            settings.TWITTER_CONSUMER_SECRET,
-            settings.TWITTER_CALLBACK_URL
-        )
-        try:
-            redirect_url = auth.get_authorization_url()
-            s = SessionStore()
-            s['request_token'] = auth.request_token
-            s['is_login'] = False
-            s['access_token'] = request.META.get('HTTP_AUTHORIZATION', None)
-            s.save(must_create=True)
-            return HttpResponseRedirect(redirect_url)
-        except tweepy.TweepError:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get(self, request, *args, **kwargs):
         auth = tweepy.OAuthHandler(
@@ -270,7 +244,10 @@ class LinkTwitterAccount(APIView):
             s = SessionStore()
             s['request_token'] = auth.request_token
             s['is_login'] = False
-            s['access_token'] = kwargs.get("access_token")
+            access_token = kwargs.get("access_token") or None
+            if not access_token:
+                access_token = request.META.get('HTTP_AUTHORIZATION', None)
+            s['access_token'] = access_token
             s.save(must_create=True)
             return HttpResponseRedirect(redirect_url)
         except tweepy.TweepError:
