@@ -168,7 +168,7 @@ class UploadImage(APIView):
 
 
 class FacebookLogin(APIView):
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         scope = "email,public_profile,user_friends,user_likes,user_photos,user_posts,publish_actions,publish_pages,manage_pages"
         base_url = "https://www.facebook.com/dialog/oauth?scope={scope}&client_id={client_id}&redirect_uri={callback_url}"
         redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
@@ -278,7 +278,7 @@ class LinkTwitterAccount(APIView):
 
 
 class TwitterLogin(APIView):
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         auth = tweepy.OAuthHandler(
             settings.TWITTER_CONSUMER_KEY,
             settings.TWITTER_CONSUMER_SECRET,
