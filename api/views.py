@@ -157,7 +157,7 @@ class UploadImage(APIView):
 
 
 class FacebookLogin(APIView):
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         scope = "email,public_profile,user_friends,user_likes,user_photos,user_posts,publish_actions,publish_pages,manage_pages"
         base_url = "https://www.facebook.com/dialog/oauth?scope={scope}&client_id={client_id}&redirect_uri={callback_url}"
         redirect_url = base_url.format(client_id=settings.FACEBOOK_CLIENT_ID,
@@ -254,7 +254,7 @@ class LinkTwitterAccount(APIView):
 
 
 class TwitterLogin(APIView):
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         auth = tweepy.OAuthHandler(
             settings.TWITTER_CONSUMER_KEY,
             settings.TWITTER_CONSUMER_SECRET,
@@ -268,7 +268,8 @@ class TwitterLogin(APIView):
             s['access_token'] = None
             s.save(must_create=True)
             return HttpResponseRedirect(redirect_url)
-        except tweepy.TweepError:
+        except tweepy.TweepError as e:
+            print e
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
