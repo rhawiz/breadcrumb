@@ -58,6 +58,46 @@ class CurrentUserDetail(APIView):
         return Response(serializer.data)
 
 
+class ProfileDetail(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', None)
+
+        user_profile = get_user_profile_from_token(token)
+
+        content_list = UserContent.objects.filter(user=user_profile)
+
+        pos = 0.0
+        neg = 0.0
+
+        for content in content_list:
+            if content.pos_sentiment_rating:
+                pos = pos + float(content.pos_sentiment_rating)
+            if content.neg_sentiment_rating:
+                neg = neg + float(content.neg_sentiment_rating)
+
+        total = pos + neg
+
+        ppos = 0.0
+        pneg = 0.0
+
+        if total:
+            ppos = (pos / total)
+            pneg = (neg / total)
+
+        pos_norm = ppos * 900
+        neg_norm = pneg * 900
+
+        data = {
+            "positive": float("%.3f" % pos_norm),
+            "negative": float("%.3f" % neg_norm)
+        }
+
+        return Response(data=data,status=status.HTTP_200_OK)
+
+
 class AccountList(generics.ListAPIView):
     queryset = SocialAccount.objects.all()
     serializer_class = AccountSerializer
@@ -316,7 +356,7 @@ class AccountDetail(APIView):
 
         user_profile = get_user_profile_from_token(token)
 
-        content_list = UserContent.objects.filter(user=user_profile, type=account_type)
+        content_list = UserContent.objects.filter(user=user_profile, source=account_type)
 
         pos = 0.0
         neg = 0.0
@@ -330,23 +370,38 @@ class AccountDetail(APIView):
             if content.neut_sentiment_rating:
                 neut += content.neut_sentiment_rating
 
-        total = pos + neg
+        total = pos + neg + neut
 
         ppos = 0.0
         pneg = 0.0
+        pneut = 0.0
+
         if total:
             ppos = (pos / total)
             pneg = (neg / total)
+            pneut = (neut / total)
 
-        pos_norm = ppos * 900
-        neg_norm = pneg * 900
+        pos_norm = ppos * 100
+        neg_norm = pneg * 100
+        neut_norm = pneut * 100
 
-        rating = pos + neg + neut
+        if pos_norm >= 90:
+            rating = "A*"
+        elif pos_norm >= 80:
+            rating = "B"
+        elif pos_norm >= 70:
+            rating = "C"
+        elif pos_norm >= 60:
+            rating = "D"
+        elif pos_norm >= 50:
+            rating = "E"
+        else:
+            rating = "F"
 
         data = {
-            'positive': pos,
-            'negative': neg,
-            'neutral': neut,
+            'positive': pos_norm,
+            'negative': neg_norm,
+            'neutral': neut_norm,
             'rating': rating,
         }
 
