@@ -32,10 +32,12 @@ def analyse_text(text_list):
 
     print text_list
     for text in text_list:
-        print text_list
+        print text
         text = text.strip()
         data = 'text={}'.format(text)
         response = requests.post(url=url, data=data)
+        print response._content
+        print response.status_code
         if response:
             try:
                 out = response.json()
