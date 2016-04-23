@@ -76,13 +76,13 @@ class UserProfile(models.Model):
 
     def generate_report(self):
         formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
-        report = Report(name=formatted_date)
-        self._scan_twitter_content()
-        self._scan_facebook_content()
-        self._scan_web_content()
-        self._scan_images()
+        report = Report.objects.create(name=formatted_date, user=self)
+        self._scan_twitter_content(report)
+        self._scan_facebook_content(report)
+        self._scan_web_content(report)
+        self._scan_images(report)
 
-    def _scan_facebook_content(self):
+    def _scan_facebook_content(self, report):
         try:
             fb_account = SocialAccount.objects.get(user_profile=self, provider='facebook')
         except SocialAccount.DoesNotExist:
@@ -123,8 +123,7 @@ class UserProfile(models.Model):
                     user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                    extra_data=extra_data,
-                    hidden=False,
+                    extra_data=extra_data, hidden=False, report=report,
                 )
             except Exception, e:
                 print e
@@ -133,7 +132,7 @@ class UserProfile(models.Model):
                     old_content[0].save()
             print "Twitter scan complete."
 
-    def _scan_twitter_content(self):
+    def _scan_twitter_content(self, report):
         try:
             twitter_account = SocialAccount.objects.get(user_profile=self, provider='twitter')
         except SocialAccount.DoesNotExist:
@@ -189,8 +188,7 @@ class UserProfile(models.Model):
                     user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                    extra_data=extra_data,
-                    hidden=False,
+                    extra_data=extra_data, hidden=False, report=report,
                 )
 
             except Exception, e:
@@ -200,7 +198,7 @@ class UserProfile(models.Model):
                     old_content[0].save()
             print "Twitter scan complete."
 
-    def _scan_images(self):
+    def _scan_images(self, report):
         pass
         # model = facial_recognition.get_model()
         model = None
@@ -258,13 +256,13 @@ class UserProfile(models.Model):
                 try:
                     UserContent.objects.create(
                         user=user, type=type, source=source, content=source_content, url=url, hashed_url=hashed_url,
-                        extra_data=extra_data, hidden=False
+                        extra_data=extra_data, hidden=False, report=report
                     )
                 except Exception, e:
                     print e
         print "Image scan complete"
 
-    def _scan_web_content(self):
+    def _scan_web_content(self, report):
         search_content = []
 
         fullname = "%s %s" % (self.user.first_name, self.user.last_name)
@@ -318,8 +316,7 @@ class UserProfile(models.Model):
                     user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                    extra_data=extra_data,
-                    hidden=False,
+                    extra_data=extra_data, hidden=False, report=report
                 )
 
             except Exception, e:
@@ -370,6 +367,7 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     name = models.CharField(null=True, blank=True, max_length=255)
+    user = models.ForeignKey(UserProfile, null=True, default=None)
 
 
 class UserContent(models.Model):
