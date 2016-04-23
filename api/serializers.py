@@ -137,7 +137,7 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ('username', 'email', 'first_name', 'last_name', 'aliases', 'avatar_base64')
+        fields = ('username', 'email', 'first_name', 'last_name', 'aliases', 'avatar_base64', 'avatar_url')
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
