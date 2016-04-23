@@ -160,7 +160,9 @@ class UserProfile(models.Model):
                 if not sentiment_analysis:
                     try:
                         sentiment_analysis = sentimentanalyser.analyse_text(content)
-                    except Exception:
+                        print sentiment_analysis
+                    except Exception as e:
+                        print e
                         pass
 
                 if sentiment_analysis:
@@ -172,14 +174,13 @@ class UserProfile(models.Model):
                 extra_data = {'id': post_id}
 
                 try:
-                    print "creating content"
+                    print "creating content..."
                     content = UserContent.objects.create(
                         user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                         neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                         neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
                         extra_data=extra_data,
                     )
-                    print content
                 except Exception, e:
                     print e
 
