@@ -68,6 +68,11 @@ class UserProfile(models.Model):
     facebook_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
 
+    def get_avatar_url(self):
+        if self.avatar and hasattr(self.avatar, 'url'):
+            return self.avatar.url
+        return None
+
     def scan_all_content(self):
         self._scan_twitter_content()
         self._scan_facebook_content()
