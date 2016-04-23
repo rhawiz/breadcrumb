@@ -253,14 +253,17 @@ class UserProfile(models.Model):
 
         fullname = "%s %s" % (self.user.first_name, self.user.last_name)
         aliases = self.aliases or []
+        long_search = fullname
         for alias in aliases:
             search_query = "{} {}".format(fullname, alias)
+            long_search = "%s %s" % (long_search, alias)
             search_content.append(search_query)
 
-        if not search_content:
-            search_content.append(fullname)
+        search_content.append(long_search)
 
-        wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=20)
+        print long_search
+
+        wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=15)
         user_web_content = wc.run()
         for user_content in user_web_content:
             user = self
