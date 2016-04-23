@@ -91,7 +91,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.CharField(read_only=True, source='user.email')
     first_name = serializers.CharField(read_only=True, source='user.first_name')
     last_name = serializers.CharField(read_only=True, source='user.last_name')
-    avatar = serializers.SerializerMethodField(read_only=True, source='user.get_avatar_url')
+    avatar = serializers.CharField(read_only=True, source='get_avatar_url')
 
     class Meta:
         model = UserProfile
