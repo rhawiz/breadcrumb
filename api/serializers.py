@@ -133,6 +133,7 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(required=False, write_only=True)
     aliases = serializers.ListField(required=False, write_only=True)
     avatar_base64 = serializers.CharField(required=False, write_only=True)
+    avatar_url = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = UserProfile
@@ -141,13 +142,24 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             if attr == 'avatar_base64':
-                fh = open("temp_img", "wb")
-                avatar_base64 = validated_data.get('avatar_base64')
-                fh.write(avatar_base64.decode('base64'))
-                fh.close()
-                img = File(fh)
-                instance.avatar.save(str(uuid.uuid4()), img, True)
-                os.remove("temp_img")
+                avatar_base64 = b64decode(validated_data.get('avatar_base64'))
+                img_filename = "%s.%s" % (str(uuid.uuid4()), "jpg")
+                instance.avatar = ContentFile(avatar_base64, img_filename)
+                instance.save()
+            elif attr == 'avatar_url':
+                avatar_url = validated_data.get('avatar_url')
+                response = urllib2.urlopen(avatar_url)
+                content_type = response.info().getheader('Content-Type')
+                extension = "jpg"
+                if 'image' in content_type:
+                    parts = content_type.split('/')
+                    extension = parts[1] or 'jpg'
+                img_filename = "%s.%s" % (str(uuid.uuid4()), extension)
+
+                img_temp = NamedTemporaryFile(delete=True)
+                img_temp.write(response.read())
+                img_temp.flush()
+                instance.avatar.save(img_filename, File(img_temp))
             if hasattr(instance, attr):
                 setattr(instance, attr, value)
             elif hasattr(instance.user, attr):
