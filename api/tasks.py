@@ -21,7 +21,7 @@ def scan_user_content(user_profile_id):
         return None
     if isinstance(user_profile, UserProfile):
         print "Scanning user content..."
-        user_profile.scan_all_content()
+        user_profile.generate_report()
 
 
 def get_result(my_work):

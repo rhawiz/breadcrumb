@@ -74,7 +74,9 @@ class UserProfile(models.Model):
             return self.avatar.url
         return None
 
-    def scan_all_content(self):
+    def generate_report(self):
+        formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+        report = Report(name=formatted_date)
         self._scan_twitter_content()
         self._scan_facebook_content()
         self._scan_web_content()
@@ -364,6 +366,12 @@ class Image(models.Model):
         return self.name
 
 
+class Report(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    name = models.CharField(null=True, blank=True, max_length=255)
+
+
 class UserContent(models.Model):
     SOURCE_FACEBOOK = 'facebook'
     SOURCE_TWITTER = 'twitter'
@@ -397,6 +405,7 @@ class UserContent(models.Model):
     extra_data = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    report = models.ForeignKey(Report, null=True, default=None)
 
     def take_down(self):
         if self.source == 'facebook':
