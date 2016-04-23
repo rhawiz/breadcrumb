@@ -46,6 +46,7 @@ def get_upload_avatar_path(instance, filename):
 
     return path
 
+
 class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, blank=False, null=False)
@@ -95,35 +96,33 @@ class UserProfile(models.Model):
             content = user_content.get('message', None)
             url = user_content.get('permalink_url', None)
             hashed_url = get_hash8(url)
-            sentiment_analysis = user_content.get('analysis', None)
-            neg_sentiment_rating = None
-            pos_sentiment_rating = None
-            neut_sentiment_rating = None
-            sentiment_label = None
-            if sentiment_analysis:
-                neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
-                pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
-                neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
-                sentiment_label = sentiment_analysis.get('label')
+            if len(UserContent.objects.filter(hashed_url=hashed_url, user=self)) == 0:
+                sentiment_analysis = user_content.get('analysis', None)
+                neg_sentiment_rating = None
+                pos_sentiment_rating = None
+                neut_sentiment_rating = None
+                sentiment_label = None
+                if sentiment_analysis:
+                    neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                    pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                    neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                    sentiment_label = sentiment_analysis.get('label')
 
-            extra_data = {
-                'id': user_content.get('id'),
-                'created_time': user_content.get('created_time')
+                extra_data = {
+                    'id': user_content.get('id'),
+                    'created_time': user_content.get('created_time')
 
-            }
-            try:
-                UserContent.objects.get(hashed_url=hashed_url).delete()
-            except UserContent.DoesNotExist:
-                pass
+                }
 
-            try:
-                UserContent.objects.create(
-                    user=user, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
-                    neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data
-                )
-            except Exception, e:
-                print e
+                try:
+                    UserContent.objects.create(
+                        user=user, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
+                        neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
+                        extra_data=extra_data
+                    )
+                except Exception, e:
+                    print e
 
     def _scan_twitter_content(self):
         try:
@@ -151,7 +150,7 @@ class UserProfile(models.Model):
             url = item['url']
             post_id = item['id']
             hashed_url = get_hash8(url)
-            if len(UserContent.objects.filter(hashed_url=hashed_url)) == 0:
+            if len(UserContent.objects.filter(hashed_url=hashed_url, user=self)) == 0:
                 sentiment_analysis = item.get('analysis', None)
                 neg_sentiment_rating = None
                 pos_sentiment_rating = None
@@ -186,7 +185,7 @@ class UserProfile(models.Model):
 
     def _scan_images(self):
         pass
-        #model = facial_recognition.get_model()
+        # model = facial_recognition.get_model()
         model = None
         if not model:
             print "Could not find face recognition model"
@@ -213,7 +212,7 @@ class UserProfile(models.Model):
             print temp_file
             try:
                 urllib.urlretrieve(img_url, temp_file)
-                #img = detect_face(temp_file)
+                # img = detect_face(temp_file)
                 img = img.convert("L")
                 os.remove(temp_file)
             except Exception as e:
@@ -223,7 +222,7 @@ class UserProfile(models.Model):
                     print e
                 continue
             img = img.convert("L")
-            #p = model.predict(img)
+            # p = model.predict(img)
             p = None
             if p == str(self.pk):
                 user = self
@@ -272,27 +271,28 @@ class UserProfile(models.Model):
             content = user_content.get('short_text', None)
             url = user_content.get('url', None)
             hashed_url = get_hash8(url)
-            sentiment_analysis = user_content.get('analysis', None)
-            neg_sentiment_rating = None
-            pos_sentiment_rating = None
-            neut_sentiment_rating = None
-            sentiment_label = None
-            if sentiment_analysis:
-                neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
-                pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
-                neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
-                sentiment_label = sentiment_analysis.get('label')
-            extra_data = json.dumps(user_content.get('relevant_content'))
+            if len(UserContent.objects.filter(hashed_url=hashed_url, user=self)) == 0:
+                sentiment_analysis = user_content.get('analysis', None)
+                neg_sentiment_rating = None
+                pos_sentiment_rating = None
+                neut_sentiment_rating = None
+                sentiment_label = None
+                if sentiment_analysis:
+                    neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                    pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                    neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                    sentiment_label = sentiment_analysis.get('label')
+                extra_data = json.dumps(user_content.get('relevant_content'))
 
-            try:
-                UserContent.objects.create(
-                    user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
-                    neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data,
-                    hidden=False,
-                )
-            except Exception, e:
-                print e
+                try:
+                    UserContent.objects.create(
+                        user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                        neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data,
+                        hidden=False,
+                    )
+                except Exception, e:
+                    print e
         print "Web scan complete"
 
     def __unicode__(self):
