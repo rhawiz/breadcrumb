@@ -29,8 +29,10 @@ def analyse_text(text_list):
     label = None
 
     counter = 0
+
+    print text_list
     for text in text_list:
-        print text
+        print text_list
         text = text.strip()
         data = 'text={}'.format(text)
         response = requests.post(url=url, data=data)
@@ -45,13 +47,16 @@ def analyse_text(text_list):
                 neutral += out_neutral
                 pos += out_pos
                 counter += 1
-            except Exception:
+            except Exception as e:
+                print e
                 pass
 
     if counter > 0:
         neg /= counter
         neutral /= counter
         pos /= counter
+
+    print neg, neutral, pos
 
     if neg >= neutral and neg >= pos:
         label = "neg"
