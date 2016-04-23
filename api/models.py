@@ -76,7 +76,7 @@ class UserProfile(models.Model):
 
     def generate_report(self):
         formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
-        report = Report.objects.create(name=formatted_date, user=self)
+        report = Report.objects.create(name=formatted_date, user_profile=self)
         self._scan_twitter_content(report)
         self._scan_facebook_content(report)
         self._scan_web_content(report)
@@ -367,7 +367,7 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     name = models.CharField(null=True, blank=True, max_length=255)
-    user = models.ForeignKey(UserProfile, null=True, default=None)
+    user_profile = models.ForeignKey(UserProfile, null=True, default=None)
 
 
 class UserContent(models.Model):
