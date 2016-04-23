@@ -424,14 +424,29 @@ class ContentList(generics.ListAPIView):
 
         sentiment = request.GET.get("sentiment") or None
         page = request.GET.get("page") or 0
+        count = request.GET.get("count") or 10
+        sort = request.GET.get("sort") or None
+
+        if sort == "neutral":
+            sort_field = '-neut_sentiment_rating'
+        elif sort == "pos":
+            sort_field = '-pos_sentiment_rating'
+        else:
+            sort_field = '-neg_sentiment_rating'
 
         page = int(page)
 
         if not isinstance(page, int):
             page = 0
 
-        start = page * 10
-        end = start + 10
+        try:
+            count = int(count)
+        except ValueError:
+            count = 10
+
+        start = page * int(count)
+
+        end = start + int(count)
 
         if sentiment not in ("pos", "neg", "neutral"):
             sentiment = None
@@ -441,9 +456,10 @@ class ContentList(generics.ListAPIView):
 
         if sentiment:
             queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False,
-                                                  sentiment_label=sentiment)[start:end]
+                                                  sentiment_label=sentiment).order_by(sort_field)[start:end]
         else:
-            queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False)[start:end]
+            queryset = UserContent.objects.filter(user=user_profile, source=content_type, hidden=False).order_by(
+                sort_field)[start:end]
 
         serializer = self.get_serializer(queryset, many=True)
 
