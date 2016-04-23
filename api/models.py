@@ -275,9 +275,9 @@ class UserProfile(models.Model):
 
         search_content.append(long_search)
 
-        print long_search
+        print search_content
 
-        wc = WebCollector(aliases=search_content, results=15)
+        wc = WebCollector(sentiment_analyer=analyse_text, aliases=search_content, results=15)
         user_web_content = wc.run()
         for user_content in user_web_content:
             user = self
@@ -292,16 +292,6 @@ class UserProfile(models.Model):
             pos_sentiment_rating = None
             neut_sentiment_rating = None
             sentiment_label = None
-            if not sentiment_analysis:
-                try:
-                    if relevant_content:
-                        sentiment_analysis = analyse_text(relevant_content)
-                    else:
-                        sentiment_analysis = analyse_text(content)
-                    print sentiment_analysis
-                except Exception as e:
-                    print e
-                    pass
             if sentiment_analysis:
                 neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
                 pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
