@@ -22,7 +22,7 @@ from django.db.models import signals
 from jsonfield import JSONField
 
 from django.contrib.auth.models import User
-from utils import analyse_text
+from breadcrumbcore.ai.sentimentanalyser import analyse_text as analyse_text
 from breadcrumbcore.utils.utils import get_hash8, random_hash8
 from breadcrumbcore.searchengines.googlesearch import GoogleImageSearch
 
@@ -96,33 +96,40 @@ class UserProfile(models.Model):
             content = user_content.get('message', None)
             url = user_content.get('permalink_url', None)
             hashed_url = get_hash8(url)
-            if len(UserContent.objects.filter(hashed_url=hashed_url, user=self)) == 0:
-                sentiment_analysis = user_content.get('analysis', None)
-                neg_sentiment_rating = None
-                pos_sentiment_rating = None
-                neut_sentiment_rating = None
-                sentiment_label = None
-                if sentiment_analysis:
-                    neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
-                    pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
-                    neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
-                    sentiment_label = sentiment_analysis.get('label')
+            sentiment_analysis = user_content.get('analysis', None)
+            neg_sentiment_rating = None
+            pos_sentiment_rating = None
+            neut_sentiment_rating = None
+            sentiment_label = None
+            if sentiment_analysis:
+                neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                sentiment_label = sentiment_analysis.get('label')
 
-                extra_data = {
-                    'id': user_content.get('id'),
-                    'created_time': user_content.get('created_time')
+            extra_data = {
+                'id': user_content.get('id'),
+                'created_time': user_content.get('created_time')
 
-                }
+            }
+            old_content = UserContent.objects.filter(user=self, hashed_url=hashed_url).order_by("created_at")
 
-                try:
-                    UserContent.objects.create(
-                        user=user, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
-                        neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                        extra_data=extra_data
-                    )
-                except Exception, e:
-                    print e
+            try:
+                for c in old_content:
+                    c.soft_delete()
+                UserContent.objects.create(
+                    user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
+                    extra_data=extra_data,
+                    hidden=False,
+                )
+            except Exception, e:
+                print e
+                if len(old_content):
+                    old_content[0].hidden = False
+                    old_content[0].save()
+            print "Twitter scan complete."
 
     def _scan_twitter_content(self):
         try:
@@ -150,39 +157,46 @@ class UserProfile(models.Model):
             url = item['url']
             post_id = item['id']
             hashed_url = get_hash8(url)
-            if len(UserContent.objects.filter(hashed_url=hashed_url, user=self)) == 0:
-                sentiment_analysis = item.get('analysis', None)
-                neg_sentiment_rating = None
-                pos_sentiment_rating = None
-                neut_sentiment_rating = None
-                sentiment_label = None
+            sentiment_analysis = item.get('analysis', None)
+            neg_sentiment_rating = None
+            pos_sentiment_rating = None
+            neut_sentiment_rating = None
+            sentiment_label = None
 
-                if not sentiment_analysis:
-                    try:
-                        sentiment_analysis = analyse_text(content)
-                        print sentiment_analysis
-                    except Exception as e:
-                        print e
-                        pass
-
-                if sentiment_analysis:
-                    neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
-                    pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
-                    neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
-                    sentiment_label = sentiment_analysis.get('label')
-
-                extra_data = {'id': post_id}
-
+            if not sentiment_analysis:
                 try:
-                    print "creating content..."
-                    content = UserContent.objects.create(
-                        user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
-                        neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                        extra_data=extra_data,
-                    )
-                except Exception, e:
+                    sentiment_analysis = analyse_text(content)
+                    print sentiment_analysis
+                except Exception as e:
                     print e
+                    pass
+
+            if sentiment_analysis:
+                neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                sentiment_label = sentiment_analysis.get('label')
+
+            extra_data = {'id': post_id}
+
+            old_content = UserContent.objects.filter(user=self, hashed_url=hashed_url).order_by("created_at")
+            try:
+                for c in old_content:
+                    c.soft_delete()
+                UserContent.objects.create(
+                    user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
+                    extra_data=extra_data,
+                    hidden=False,
+                )
+
+            except Exception, e:
+                print e
+                if len(old_content):
+                    old_content[0].hidden = False
+                    old_content[0].save()
+            print "Twitter scan complete."
 
     def _scan_images(self):
         pass
@@ -273,40 +287,44 @@ class UserProfile(models.Model):
             content = user_content.get('short_text', None)
             url = user_content.get('url', None)
             hashed_url = get_hash8(url)
-            if len(UserContent.objects.filter(hashed_url=hashed_url, user=self)) == 0:
-                sentiment_analysis = user_content.get('analysis', None)
-                neg_sentiment_rating = None
-                pos_sentiment_rating = None
-                neut_sentiment_rating = None
-                sentiment_label = None
-                if not sentiment_analysis:
-                    try:
-                        if relevant_content:
-                            sentiment_analysis = analyse_text(relevant_content)
-                        else:
-                            sentiment_analysis = analyse_text(content)
-
-                        print sentiment_analysis
-                    except Exception as e:
-                        print e
-                        pass
-                if sentiment_analysis:
-                    neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
-                    pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
-                    neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
-                    sentiment_label = sentiment_analysis.get('label')
-                extra_data = json.dumps(user_content.get('relevant_content'))
-
+            sentiment_analysis = user_content.get('analysis', None)
+            neg_sentiment_rating = None
+            pos_sentiment_rating = None
+            neut_sentiment_rating = None
+            sentiment_label = None
+            if not sentiment_analysis:
                 try:
-                    UserContent.objects.create(
-                        user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
-                        neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                        extra_data=extra_data,
-                        hidden=False,
-                    )
-                except Exception, e:
+                    if relevant_content:
+                        sentiment_analysis = analyse_text(relevant_content)
+                    else:
+                        sentiment_analysis = analyse_text(content)
+                    print sentiment_analysis
+                except Exception as e:
                     print e
+                    pass
+            if sentiment_analysis:
+                neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
+                pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
+                neut_sentiment_rating = sentiment_analysis.get('probability').get('neutral')
+                sentiment_label = sentiment_analysis.get('label')
+            extra_data = json.dumps(user_content.get('relevant_content'))
+            old_content = UserContent.objects.filter(user=self, hashed_url=hashed_url).order_by("created_at")
+            try:
+                for c in old_content:
+                    c.soft_delete()
+                UserContent.objects.create(
+                    user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
+                    neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
+                    extra_data=extra_data,
+                    hidden=False,
+                )
+
+            except Exception, e:
+                print e
+                if len(old_content):
+                    old_content[0].hidden = False
+                    old_content[0].save()
         print "Web scan complete"
 
     def __unicode__(self):
@@ -406,9 +424,6 @@ class UserContent(models.Model):
     def soft_delete(self):
         self.hidden = True
         self.save()
-
-    class Meta:
-        unique_together = (("hashed_url", "user"),)
 
     def __unicode__(self):
         return "{} - {}".format(self.user.user.username, self.source)
