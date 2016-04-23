@@ -1,18 +1,26 @@
 import os
+import urllib2
 import urlparse
+from base64 import b64decode
+from tempfile import NamedTemporaryFile
+
 import requests
 from django.contrib.sessions.backends.db import SessionStore
 import tweepy
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.exceptions import MultipleObjectsReturned
+from django.core.files import File
+from io import BytesIO
+
+from django.core.files.base import ContentFile
 from oauth2_provider.models import Application, AccessToken
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from api.exceptions import *
 from rest_framework.exceptions import *
 
-#from api.facial_recognition import update_face_rec_model
+# from api.facial_recognition import update_face_rec_model
 from api.models import *
 from rest_framework.utils import model_meta
 
@@ -83,10 +91,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.CharField(read_only=True, source='user.email')
     first_name = serializers.CharField(read_only=True, source='user.first_name')
     last_name = serializers.CharField(read_only=True, source='user.last_name')
+    avatar = serializers.CharField(read_only=True, source='avatar.url')
 
     class Meta:
         model = UserProfile
-        fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases')
+        fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases', 'avatar')
 
 
 class ContentSerializer(serializers.ModelSerializer):
@@ -123,13 +132,22 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False, write_only=True)
     last_name = serializers.CharField(required=False, write_only=True)
     aliases = serializers.ListField(required=False, write_only=True)
+    avatar_base64 = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = UserProfile
-        fields = ('username', 'email', 'first_name', 'last_name', 'aliases')
+        fields = ('username', 'email', 'first_name', 'last_name', 'aliases', 'avatar_base64')
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
+            if attr == 'avatar_base64':
+                fh = open("temp_img", "wb")
+                avatar_base64 = validated_data.get('avatar_base64')
+                fh.write(avatar_base64.decode('base64'))
+                fh.close()
+                img = File(fh)
+                instance.avatar.save(str(uuid.uuid4()), img, True)
+                os.remove("temp_img")
             if hasattr(instance, attr):
                 setattr(instance, attr, value)
             elif hasattr(instance.user, attr):
@@ -148,11 +166,14 @@ class SignupSerializer(serializers.Serializer):
     last_name = serializers.CharField(required=False, write_only=True)
     fullname = serializers.CharField(required=False, write_only=True)
     gender = serializers.IntegerField(required=False, write_only=True)
+    avatar_url = serializers.CharField(required=False, write_only=True)
+    avatar_base64 = serializers.CharField(required=False, write_only=True)
     aliases = serializers.JSONField(required=False)
 
     class Meta:
         model = UserProfile
-        fields = ('id', 'gender', 'username', 'email', 'password', 'first_name', 'last_name', 'aliases')
+        fields = ('id', 'gender', 'username', 'email', 'password', 'first_name', 'last_name', 'aliases', 'avatar_url',
+                  'avatar_base64')
 
     def create(self, validated_data):
 
@@ -178,6 +199,27 @@ class SignupSerializer(serializers.Serializer):
         user_profile = UserProfile.objects.create(**user_profile_data)
         user_profile.save()
 
+        if 'avatar_base64' in validated_data:
+            avatar_base64 = b64decode(validated_data.get('avatar_base64'))
+            img_filename = "%s.%s" % (str(uuid.uuid4()), "jpg")
+            user_profile.avatar = ContentFile(avatar_base64, img_filename)
+            user_profile.save()
+        elif 'avatar_url' in validated_data:
+            avatar_url = validated_data.get('avatar_url')
+            response = urllib2.urlopen(avatar_url)
+            content_type = response.info().getheader('Content-Type')
+            extension = "jpg"
+            if 'image' in content_type:
+                parts = content_type.split('/')
+                extension = parts[1] or 'jpg'
+            img_filename = "%s.%s" % (str(uuid.uuid4()), extension)
+
+            img_temp = NamedTemporaryFile(delete=True)
+            img_temp.write(response.read())
+            img_temp.flush()
+
+            user_profile.avatar.save(img_filename, File(img_temp))
+
         access_token = generate_access_token(user)
 
         user_data = UserSerializer(user_profile.user).data
@@ -201,6 +243,7 @@ class FacebookLoginSerializer(serializers.Serializer):
         fullname = validated_data.get('name')
         email = validated_data.get('email')
         gender = validated_data.get('gender')
+        avatar_url = validated_data.get('avatar_url')
         fb_access_token = validated_data.get('fb_access_token')
 
         gender_id = 0
@@ -221,7 +264,8 @@ class FacebookLoginSerializer(serializers.Serializer):
                 'email': email,
                 'password': uuid.uuid4(),
                 'fullname': fullname,
-                'gender': gender_id
+                'gender': gender_id,
+                'avatar_url': avatar_url,
             }
             user_profile_serializer = SignupSerializer(data=user_profile_data)
             user_profile_serializer.is_valid(raise_exception=True)
@@ -272,7 +316,6 @@ class FacebookLoginSerializer(serializers.Serializer):
 
         fb_access_token = None
 
-
         for part in fb_access_token_response_parts:
             if part[0] == 'access_token':
                 fb_access_token = part[1]
@@ -288,11 +331,11 @@ class FacebookLoginSerializer(serializers.Serializer):
         fb_id = user_info_response.get('id')
         fullname = user_info_response.get('name')
         gender = user_info_response.get('gender')
-
+        avatar_url = "https://graph.facebook.com/%s/picture?width=1000" % fb_id
         email = user_info_response.get('email')
         try:
             User.objects.get(email=email)
-            email = "%s@bc.com" % str(uuid.uuid4())[:8]
+            email = "%s%s@bc.com" % (fullname.replace(" ", "").lower(), str(uuid.uuid4())[:8])
         except User.DoesNotExist:
             pass
 
@@ -301,6 +344,7 @@ class FacebookLoginSerializer(serializers.Serializer):
             'name': fullname,
             'email': email,
             'gender': gender,
+            'avatar_url': avatar_url,
             'fb_access_token': fb_access_token
         }
 
@@ -317,7 +361,6 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
         user_profile = validated_data.get('user_profile', None)
         fb_id = validated_data.get('fb_id', None)
         fullname = validated_data.get('fullname', None)
-
 
         try:
             social_account = SocialAccount.objects.get(
@@ -475,7 +518,6 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
         user_profile = get_user_profile_from_token("Bearer %s" % access_token)
         social_username = twitter_data.get('screen_name') or None
 
-
         return {
             'key': key,
             'secret': secret,
@@ -500,6 +542,7 @@ class TwitterLoginSerializer(serializers.Serializer):
         twitter_id = validated_data.get('twitter_id')
         username = validated_data.get('username')
         social_username = validated_data.get('social_username')
+        avatar_url = validated_data.get('avatar_url')
 
         social_account = None
 
@@ -514,6 +557,7 @@ class TwitterLoginSerializer(serializers.Serializer):
                 'email': email,
                 'password': uuid.uuid4(),
                 'fullname': fullname,
+                'avatar_url': avatar_url,
             }
             user_profile_serializer = SignupSerializer(data=user_profile_data)
             user_profile_serializer.is_valid(raise_exception=True)
@@ -569,11 +613,12 @@ class TwitterLoginSerializer(serializers.Serializer):
         twitter_id = twitter_data.get('id')
         fullname = twitter_data.get('name')
         email = twitter_data.get('email')
+        avatar_url = twitter_data.get('profile_image_url')
         social_username = twitter_data.get('screen_name') or None
 
         try:
             User.objects.get(email=email)
-            email = "%s@bc.com" % str(uuid.uuid4())[:8]
+            email = "%s%s@bc.com" % (fullname.replace(" ", "").lower(), str(uuid.uuid4())[:8])
         except User.DoesNotExist:
             pass
 
@@ -591,6 +636,7 @@ class TwitterLoginSerializer(serializers.Serializer):
             'fullname': fullname,
             'email': email,
             'username': username,
+            'avatar_url': avatar_url,
             'social_username': social_username,
         }
 

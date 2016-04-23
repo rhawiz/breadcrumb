@@ -5,7 +5,7 @@ import os
 import thread
 import urllib
 from multiprocessing import Process
-from time import sleep
+from time import sleep, time
 
 # from breadcrumbcore.ai.facialrecognition import detect_face
 import requests
@@ -39,6 +39,13 @@ class TestModel(models.Model):
     field2 = models.IntegerField(blank=True)
 
 
+def get_upload_avatar_path(instance, filename):
+    timestamp = int(round(time() * 1000))
+
+    path = "avatar/%s/%s_%s" % (instance.id, timestamp, filename)
+
+    return path
+
 class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, blank=False, null=False)
@@ -55,7 +62,7 @@ class UserProfile(models.Model):
 
     aliases = JSONField(null=True, blank=True)
 
-    avatar = models.ImageField(null=True, blank=True)
+    avatar = models.ImageField(upload_to=get_upload_avatar_path, blank=True, null=True, default=None, max_length=255)
 
     web_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
     facebook_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
@@ -174,66 +181,67 @@ class UserProfile(models.Model):
 
     def _scan_images(self):
         pass
-        # model = facial_recognition.get_model()
-        # if not model:
-        #     print "Could not find face recognition model"
-        #     return
-        #
-        # fullname = "%s %s" % (self.user.first_name, self.user.last_name)
-        #
-        # image_search = GoogleImageSearch(fullname, start=0, num=50, search_type="face")
-        #
-        # attempts = 0
-        #
-        # content_list = image_search.search()
-        #
-        # while not len(content_list) and attempts <= 5:
-        #     content_list = image_search.search()
-        #     attempts += 1
-        #
-        # for content in content_list:
-        #     print content
-        #     img_url = content.get("img_url") or None
-        #     if not img_url:
-        #         continue
-        #     temp_file = os.path.abspath("media\\temp\\%s.jpg" % str(uuid.uuid4()))
-        #     print temp_file
-        #     try:
-        #         urllib.urlretrieve(img_url, temp_file)
-        #         img = detect_face(temp_file)
-        #         img = img.convert("L")
-        #         os.remove(temp_file)
-        #     except Exception as e:
-        #         try:
-        #             os.remove(temp_file)
-        #         except Exception as e:
-        #             print e
-        #         continue
-        #     img = img.convert("L")
-        #     p = model.predict(img)
-        #     print p, str(self.pk)
-        #     if p == str(self.pk):
-        #         user = self
-        #         type = 'photo'
-        #         source = 'web'
-        #         source_content = content.get('text') or None
-        #         url = content.get('img_url', None)
-        #         extra_data = {"page_url": content.get('page_url')}
-        #         hashed_url = get_hash8(url)
-        #
-        #         try:
-        #             UserContent.objects.get(hashed_url=hashed_url, hidden=False, user=user).soft_delete()
-        #         except UserContent.DoesNotExist:
-        #             pass
-        #
-        #         try:
-        #             UserContent.objects.create(
-        #                 user=user, type=type, source=source, content=source_content, url=url, hashed_url=hashed_url,
-        #                 extra_data=extra_data, hidden=False
-        #             )
-        #         except Exception, e:
-        #             print e
-        # print "Image scan complete"
+        #model = facial_recognition.get_model()
+        model = None
+        if not model:
+            print "Could not find face recognition model"
+            return
+
+        fullname = "%s %s" % (self.user.first_name, self.user.last_name)
+
+        image_search = GoogleImageSearch(fullname, start=0, num=50, search_type="face")
+
+        attempts = 0
+
+        content_list = image_search.search()
+
+        while not len(content_list) and attempts <= 5:
+            content_list = image_search.search()
+            attempts += 1
+
+        for content in content_list:
+            print content
+            img_url = content.get("img_url") or None
+            if not img_url:
+                continue
+            temp_file = os.path.abspath("media\\temp\\%s.jpg" % str(uuid.uuid4()))
+            print temp_file
+            try:
+                urllib.urlretrieve(img_url, temp_file)
+                #img = detect_face(temp_file)
+                img = img.convert("L")
+                os.remove(temp_file)
+            except Exception as e:
+                try:
+                    os.remove(temp_file)
+                except Exception as e:
+                    print e
+                continue
+            img = img.convert("L")
+            #p = model.predict(img)
+            p = None
+            if p == str(self.pk):
+                user = self
+                type = 'photo'
+                source = 'web'
+                source_content = content.get('text') or None
+                url = content.get('img_url', None)
+                extra_data = {"page_url": content.get('page_url')}
+                hashed_url = get_hash8(url)
+
+                try:
+                    UserContent.objects.get(hashed_url=hashed_url, hidden=False, user=user).soft_delete()
+                except UserContent.DoesNotExist:
+                    pass
+
+                try:
+                    UserContent.objects.create(
+                        user=user, type=type, source=source, content=source_content, url=url, hashed_url=hashed_url,
+                        extra_data=extra_data, hidden=False
+                    )
+                except Exception, e:
+                    print e
+        print "Image scan complete"
 
     def _scan_web_content(self):
         search_content = []
