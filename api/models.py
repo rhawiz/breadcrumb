@@ -22,7 +22,7 @@ from django.db.models import signals
 from jsonfield import JSONField
 
 from django.contrib.auth.models import User
-from breadcrumbcore.ai import sentimentanalyser
+from utils import analyse_text
 from breadcrumbcore.utils.utils import get_hash8, random_hash8
 from breadcrumbcore.searchengines.googlesearch import GoogleImageSearch
 
@@ -87,7 +87,7 @@ class UserProfile(models.Model):
             return None
 
         access_token = fb_account.social_token
-        fc = FacebookCollector(access_token=access_token, sentiment_analyser=sentimentanalyser.analyse_text)
+        fc = FacebookCollector(access_token=access_token, sentiment_analyser=analyse_text)
         facebook_content = fc.run()
         for user_content in facebook_content:
             user = self
@@ -159,7 +159,7 @@ class UserProfile(models.Model):
 
                 if not sentiment_analysis:
                     try:
-                        sentiment_analysis = sentimentanalyser.analyse_text(content)
+                        sentiment_analysis = analyse_text(content)
                         print sentiment_analysis
                     except Exception as e:
                         print e
@@ -263,12 +263,13 @@ class UserProfile(models.Model):
 
         print long_search
 
-        wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=15)
+        wc = WebCollector(aliases=search_content, results=15)
         user_web_content = wc.run()
         for user_content in user_web_content:
             user = self
             type = 'text'
             source = 'web'
+            relevant_content = user_content.get('relevant_content')
             content = user_content.get('short_text', None)
             url = user_content.get('url', None)
             hashed_url = get_hash8(url)
@@ -278,6 +279,17 @@ class UserProfile(models.Model):
                 pos_sentiment_rating = None
                 neut_sentiment_rating = None
                 sentiment_label = None
+                if not sentiment_analysis:
+                    try:
+                        if relevant_content:
+                            sentiment_analysis = analyse_text(relevant_content)
+                        else:
+                            sentiment_analysis = analyse_text(content)
+
+                        print sentiment_analysis
+                    except Exception as e:
+                        print e
+                        pass
                 if sentiment_analysis:
                     neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
                     pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
@@ -289,7 +301,8 @@ class UserProfile(models.Model):
                     UserContent.objects.create(
                         user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                         neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
-                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label, extra_data=extra_data,
+                        neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
+                        extra_data=extra_data,
                         hidden=False,
                     )
                 except Exception, e:

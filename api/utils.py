@@ -1,5 +1,6 @@
 import base64
 import datetime
+import requests
 
 import binascii
 import os
@@ -13,6 +14,60 @@ from oauthlib.oauth2.rfc6749.tokens import random_token_generator
 def is_ascii(s):
     return all(ord(c) < 128 for c in s)
 
+
+
+url = 'http://text-processing.com/api/sentiment/'
+
+
+def analyse_text(text_list):
+    if not isinstance(text_list, list):
+        text_list = [text_list]
+
+    neg = 0.0
+    neutral = 0.0
+    pos = 0.0
+    label = None
+
+    counter = 0
+    for text in text_list:
+        print text
+        text = text.strip()
+        data = 'text={}'.format(text)
+        response = requests.post(url=url, data=data)
+        if response:
+            try:
+                out = response.json()
+                out_neg = float(out["probability"]["neg"])
+                out_neutral = float(out["probability"]["neutral"])
+                out_pos = float(out["probability"]["pos"])
+
+                neg += out_neg
+                neutral += out_neutral
+                pos += out_pos
+                counter += 1
+            except Exception:
+                pass
+
+    if counter > 0:
+        neg /= counter
+        neutral /= counter
+        pos /= counter
+
+    if neg >= neutral and neg >= pos:
+        label = "neg"
+    elif neutral >= neg and neutral >= pos:
+        label = "neutral"
+    elif pos >= neg and pos >= neutral:
+        label = "pos"
+
+    return {
+        "probability": {
+            "neg": neg,
+            "neutral": neutral,
+            "pos": pos
+        },
+        "label": label
+    }
 
 def generate_access_token(user):
     try:
