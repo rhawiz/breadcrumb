@@ -260,7 +260,7 @@ class UserProfile(models.Model):
         if not search_content:
             search_content.append(fullname)
 
-        wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=50)
+        wc = WebCollector(sentiment_analyer=sentimentanalyser.analyse_text, aliases=search_content, results=20)
         user_web_content = wc.run()
         for user_content in user_web_content:
             user = self
