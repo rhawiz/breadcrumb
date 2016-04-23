@@ -458,7 +458,6 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
         try:
             social_account = SocialAccount.objects.get(
                 provider='twitter',
-                social_id=twitter_id,
                 user_profile=user_profile
             )
         except SocialAccount.DoesNotExist:
