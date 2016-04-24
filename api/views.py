@@ -156,12 +156,9 @@ class Scan(APIView):
         print source
 
         try:
-            print 1
             scan_user_content.delay(str(user_profile.pk), source)
-            print 2
         except Exception, e:
             print e
-            print 3
             scan_user_content(str(user_profile.pk), source)
 
         return Response(status=status.HTTP_200_OK)
