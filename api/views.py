@@ -153,6 +153,8 @@ class Scan(APIView):
 
         source = kwargs.get("source") or None
 
+        print source
+
         try:
             scan_user_content.delay(str(user_profile.pk), source)
         except Exception, e:

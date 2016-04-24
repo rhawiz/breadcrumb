@@ -18,10 +18,10 @@ urlpatterns = [
     url(r'^link_twitter/$', views.LinkTwitterAccount.as_view(), name="link_twitter_post"),
     url(r'^link_facebook/(?P<access_token>[^/]+)/$', views.LinkFacebookAccount.as_view(), name="link_facebook_get"),
     url(r'^link_facebook/$', views.LinkFacebookAccount.as_view(), name="link_facebook_post"),
-    url(r'^scan/', views.Scan.as_view(), name="scan", kwargs={'source': "all"}),
-    url(r'^scan/web/', views.Scan.as_view(), name="scan", kwargs={'source': "web"}),
-    url(r'^scan/facebook/', views.Scan.as_view(), name="scan", kwargs={'source': "facebook"}),
-    url(r'^scan/twitter/', views.Scan.as_view(), name="scan", kwargs={'source': "twitter"}),
+    url(r'^scan/', views.Scan.as_view(), name="scan_all", kwargs={'source': "all"}),
+    url(r'^scan/web/', views.Scan.as_view(), name="scan_web", kwargs={'source': "web"}),
+    url(r'^scan/facebook/', views.Scan.as_view(), name="scan_facebook", kwargs={'source': "facebook"}),
+    url(r'^scan/twitter/', views.Scan.as_view(), name="scan_twitter", kwargs={'source': "twitter"}),
     url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 
     url(r'^accounts/(?P<account_type>[^/]+)/', views.AccountDetail.as_view(), name="account_detail"),
@@ -29,11 +29,11 @@ urlpatterns = [
     url(r'^accounts/', views.AccountList.as_view(), name="account_list"),
 
     url(r'^content/facebook/', views.ContentList.as_view(), name="facebook_content_list",
-        kwargs={'source': "facebook"}),
+        kwargs={'content_type': "facebook"}),
     url(r'^content/twitter/', views.ContentList.as_view(), name="twitter_content_list",
-        kwargs={'source': "twitter"}),
+        kwargs={'content_type': "twitter"}),
     url(r'^content/web/', views.ContentList.as_view(), name="web_content_list",
-        kwargs={'source': "web"}),
+        kwargs={'content_type': "web"}),
 
     url(r'^content/(?P<pk>[^/]+)/$', views.ContentDetail.as_view(), name="content_detail"),
 
