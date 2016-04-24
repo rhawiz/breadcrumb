@@ -134,9 +134,9 @@ class UserProfile(models.Model):
                     c.soft_delete()
                 if not report or not isinstance(report, Report):
                     formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
-                    report = Report.objects.create(name=formatted_date, user_profile=self)
+                    report = Report.objects.create(name=formatted_date, user_profile=user)
                 UserContent.objects.create(
-                    user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    user=user, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
                     extra_data=extra_data, hidden=False, report=report,
@@ -180,6 +180,7 @@ class UserProfile(models.Model):
             attempts += 1
         for item in twitter_content:
             content_type = 'text'
+            user = self
             source = 'twitter'
             content = item['text']
             url = item['url']
@@ -213,9 +214,9 @@ class UserProfile(models.Model):
                     c.soft_delete()
                 if not report or not isinstance(report, Report):
                     formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
-                    report = Report.objects.create(name=formatted_date, user_profile=self)
+                    report = Report.objects.create(name=formatted_date, user_profile=user)
                 UserContent.objects.create(
-                    user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
+                    user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
                     extra_data=extra_data, hidden=False, report=report,
@@ -320,6 +321,7 @@ class UserProfile(models.Model):
             except Exception, e:
                 print e
             attempts += 1
+
         for user_content in user_web_content:
             user = self
             type = 'text'
@@ -345,7 +347,7 @@ class UserProfile(models.Model):
                     c.soft_delete()
                 if not report or not isinstance(report, Report):
                     formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
-                    report = Report.objects.create(name=formatted_date, user_profile=self)
+                    report = Report.objects.create(name=formatted_date, user_profile=user)
                 UserContent.objects.create(
                     user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
