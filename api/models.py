@@ -405,6 +405,9 @@ class Report(models.Model):
     name = models.CharField(null=True, blank=True, max_length=255)
     user_profile = models.ForeignKey(UserProfile, null=True, default=None)
 
+    def _get_content(self):
+        return UserContent.objects.filter(report=self)
+
     def formatted_date(self, format='%A %d %b %Y, %I:%M%p'):
         return str(self.created_at.strftime(format))
 

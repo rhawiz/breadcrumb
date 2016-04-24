@@ -131,6 +131,49 @@ class AccountList(generics.ListAPIView):
         return Response(serializer.data)
 
 
+class ReportList(generics.ListAPIView):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = {
+            "count": len(serializer.data),
+            "reports": serializer.data
+        }
+        return Response(data)
+
+    def get_queryset(self):
+        token = self.request.META.get('HTTP_AUTHORIZATION', None)
+        user_profile = get_user_profile_from_token(token)
+        return Report.objects.filter(user_profile=user_profile)
+
+
+class ReportDetail(generics.RetrieveDestroyAPIView):
+    queryset = Report.objects.all()
+    serializer_class = ReportDetailSerializer
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
 class UserProfileList(generics.ListAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer

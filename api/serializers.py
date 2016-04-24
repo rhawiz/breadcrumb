@@ -126,6 +126,25 @@ class ContentSerializer(serializers.ModelSerializer):
         }
 
 
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = (
+            'id', 'name', 'created_at',
+        )
+
+
+class ReportDetailSerializer(serializers.ModelSerializer):
+    content = ContentSerializer(source='_get_content', many=True)
+
+    class Meta:
+        model = Report
+        fields = (
+            'id', 'name', 'created_at', 'content'
+        )
+
+
+
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, write_only=True)
     email = serializers.CharField(required=False, write_only=True)
