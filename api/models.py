@@ -96,6 +96,7 @@ class UserProfile(models.Model):
         while attempts <= 4:
             try:
                 facebook_content = fc.run()
+                break
             except Exception, e:
                 print e
             attempts += 1
@@ -164,6 +165,7 @@ class UserProfile(models.Model):
         while attempts <= 4:
             try:
                 twitter_content = tc.run()
+                break
             except Exception, e:
                 print e
             attempts += 1
@@ -299,6 +301,7 @@ class UserProfile(models.Model):
         while attempts <= 4:
             try:
                 user_web_content = wc.run()
+                break
             except Exception, e:
                 print e
             attempts += 1
