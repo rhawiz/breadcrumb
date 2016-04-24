@@ -49,6 +49,7 @@ urlpatterns = [
     url(r'^me/$', views.CurrentUserDetail.as_view(), name="current_user_detail"),
 
     url(r'^profile/$', views.ProfileDetail.as_view(), name="profile"),
+    url(r'^publish_post/$', views.PublishPost.as_view(), name="publish_post"),
 
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),
 

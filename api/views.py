@@ -606,3 +606,18 @@ class ContentDetail(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         instance.soft_delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PublishPost(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        data["access_token"] = request.META.get('HTTP_AUTHORIZATION', None)
+        serializer = PublishPostSerializer(data=data)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(data=serializer.data)

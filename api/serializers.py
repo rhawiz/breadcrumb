@@ -144,7 +144,6 @@ class ReportDetailSerializer(serializers.ModelSerializer):
         )
 
 
-
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, write_only=True)
     email = serializers.CharField(required=False, write_only=True)
@@ -781,3 +780,65 @@ class UploadImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ('name', 'url', 'access_token', 'image_base64')
+
+
+class PublishPostSerializer(serializers.Serializer):
+    provider = serializers.CharField(required=True)
+    message = serializers.CharField(required=True)
+    access_token = serializers.CharField(required=True)
+
+    def create(self, validated_data):
+        provider = validated_data.get('provider')
+        message = validated_data.get('message')
+        user = validated_data.get('user')
+        social_account = SocialAccount.objects.get(user_profile=user, provider=provider)
+
+        if provider == 'facebook':
+            url = "https://graph.facebook.com/v2.5/me/feed?access_token={}".format(social_account.social_token)
+            payload = {'message': message}
+            response = r.post(url=url, data=payload)
+            response_content = response.json()
+            msg_url = None
+            if 'id' in response_content:
+                url = "https://www.facebook.com/%s" % response_content.get("id")
+        elif provider == 'twitter':
+            url_safe_msg = urllib.quote(message)
+            url = "https://api.twitter.com/1.1/statuses/update.json?status=%s" % url_safe_msg
+            auth = OAuth1(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET, social_account.social_token,
+                          social_account.social_secret)
+            response = requests.post(url=url, auth=auth)
+            response_content = response.json()
+            msg_url = None
+            if 'id' in response_content:
+                msg_url = "https://www.twitter.com/%s/status/%s" % (response_content.get('user').get('screen_name'), response_content.get('id'))
+
+        self._data = {
+            'provider_response': response_content,
+            'message': message,
+            'url': msg_url
+        }
+
+        return user
+
+    def validate(self, data):
+        provider = data.get('provider', None)
+        message = data.get('message', None)
+        access_token = data.get('access_token', None)
+        user_profile = get_user_profile_from_token(access_token)
+        if not provider:
+            raise ValidationError(detail={'provider': 'This field is required.'})
+        if not message:
+            raise ValidationError(detail={'message': 'This field is required.'})
+        if provider not in ('facebook', 'twitter'):
+            raise ValidationError(detail={'provider': 'Invalid platform, choices are facebook or twitter.'})
+
+        try:
+            SocialAccount.objects.get(user_profile=user_profile, provider=provider)
+        except SocialAccount.DoesNotExist:
+            raise ValidationError(detail={'error': 'User profile does not have a %s account' % provider})
+
+        return {
+            'provider': provider,
+            'message': message,
+            'user': user_profile
+        }
