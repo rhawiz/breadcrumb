@@ -9,4 +9,5 @@ celery==3.1.23
 redis==2.10.3
 tweepy==3.5.0
 django-celery==3.1.17
+python-dateutil==2.4.2
 git+git://github.com/rhawiz/breadcrumbcore.git
