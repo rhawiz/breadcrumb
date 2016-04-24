@@ -29,11 +29,11 @@ urlpatterns = [
     url(r'^accounts/', views.AccountList.as_view(), name="account_list"),
 
     url(r'^content/facebook/', views.ContentList.as_view(), name="facebook_content_list",
-        kwargs={'content_type': "facebook"}),
+        kwargs={'source': "facebook"}),
     url(r'^content/twitter/', views.ContentList.as_view(), name="twitter_content_list",
-        kwargs={'content_type': "twitter"}),
+        kwargs={'source': "twitter"}),
     url(r'^content/web/', views.ContentList.as_view(), name="web_content_list",
-        kwargs={'content_type': "web"}),
+        kwargs={'source': "web"}),
 
     url(r'^content/(?P<pk>[^/]+)/$', views.ContentDetail.as_view(), name="content_detail"),
 
