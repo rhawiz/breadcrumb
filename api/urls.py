@@ -19,9 +19,9 @@ urlpatterns = [
     url(r'^link_facebook/(?P<access_token>[^/]+)/$', views.LinkFacebookAccount.as_view(), name="link_facebook_get"),
     url(r'^link_facebook/$', views.LinkFacebookAccount.as_view(), name="link_facebook_post"),
     url(r'^scan/', views.Scan.as_view(), name="scan", kwargs={'source': "all"}),
-    url(r'^scan_web/', views.Scan.as_view(), name="scan", kwargs={'source': "web"}),
-    url(r'^scan_facebook/', views.Scan.as_view(), name="scan", kwargs={'source': "facebook"}),
-    url(r'^scan_twitter/', views.Scan.as_view(), name="scan", kwargs={'source': "twitter"}),
+    url(r'^scan/web/', views.Scan.as_view(), name="scan", kwargs={'source': "web"}),
+    url(r'^scan/facebook/', views.Scan.as_view(), name="scan", kwargs={'source': "facebook"}),
+    url(r'^scan/twitter/', views.Scan.as_view(), name="scan", kwargs={'source': "twitter"}),
     url(r'^upload_image/$', views.UploadImage.as_view(), name="upload_image"),
 
     url(r'^accounts/(?P<account_type>[^/]+)/', views.AccountDetail.as_view(), name="account_detail"),
