@@ -90,7 +90,16 @@ class UserProfile(models.Model):
 
         access_token = fb_account.social_token
         fc = FacebookCollector(access_token=access_token, sentiment_analyser=analyse_text)
-        facebook_content = fc.run()
+
+        attempts = 0
+        facebook_content=[]
+        while attempts <= 4:
+            try:
+                facebook_content = fc.run()
+            except Exception, e:
+                print e
+            attempts += 1
+
         for user_content in facebook_content:
             user = self
             content_type = 'text'
@@ -150,7 +159,14 @@ class UserProfile(models.Model):
             consumer_secret=consumer_secret,
             consumer_key=consumer_key,
         )
-        twitter_content = tc.run()
+        attempts = 0
+        twitter_content=[]
+        while attempts <= 4:
+            try:
+                twitter_content = tc.run()
+            except Exception, e:
+                print e
+            attempts += 1
         for item in twitter_content:
             content_type = 'text'
             source = 'twitter'
@@ -278,7 +294,14 @@ class UserProfile(models.Model):
         print search_content
 
         wc = WebCollector(sentiment_analyer=analyse_text, aliases=search_content, results=15)
-        user_web_content = wc.run()
+        attempts = 0
+        user_web_content = []
+        while attempts <= 4:
+            try:
+                user_web_content = wc.run()
+            except Exception, e:
+                print e
+            attempts += 1
         for user_content in user_web_content:
             user = self
             type = 'text'
