@@ -99,7 +99,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class ContentSerializer(serializers.ModelSerializer):
-    created_at_timestamp = serializers.SerializerMethodField('_get_expires_timestamp')
+    created_at_timestamp = serializers.SerializerMethodField('_get_post_created_timestamp')
     sentiment = serializers.SerializerMethodField('_get_sentiment')
 
     class Meta:
@@ -114,8 +114,8 @@ class ContentSerializer(serializers.ModelSerializer):
             'sentiment_label': {'write_only': True},
         }
 
-    def _get_expires_timestamp(self, obj):
-        return int(time.mktime(obj.created_at.timetuple()))
+    def _get_post_created_timestamp(self, obj):
+        return int(time.mktime(obj.post_created_date.timetuple()))
 
     def _get_sentiment(self, obj):
         return {

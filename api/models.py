@@ -1,7 +1,7 @@
 import datetime
 import json
 import os
-
+from dateutil.parser import parse
 import thread
 import urllib
 from multiprocessing import Process
@@ -116,6 +116,9 @@ class UserProfile(models.Model):
             pos_sentiment_rating = None
             neut_sentiment_rating = None
             sentiment_label = None
+            created_at_timestamp = user_content.get('created_time')
+            created_at_datetime = parse(created_at_timestamp)
+
             if sentiment_analysis:
                 neg_sentiment_rating = sentiment_analysis.get('probability').get('neg')
                 pos_sentiment_rating = sentiment_analysis.get('probability').get('pos')
@@ -124,7 +127,7 @@ class UserProfile(models.Model):
 
             extra_data = {
                 'id': user_content.get('id'),
-                'created_time': user_content.get('created_time')
+                'created_time': created_at_timestamp
 
             }
             old_content = UserContent.objects.filter(user=self, hashed_url=hashed_url).order_by("created_at")
@@ -139,7 +142,7 @@ class UserProfile(models.Model):
                     user=user, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                    extra_data=extra_data, hidden=False, report=report,
+                    extra_data=extra_data, hidden=False, report=report, post_created_at=created_at_datetime,
                 )
             except Exception, e:
                 print e
@@ -185,6 +188,8 @@ class UserProfile(models.Model):
             content = item['text']
             url = item['url']
             post_id = item['id']
+            created_at_timestamp = item['created_at_timestamp']
+            created_at_datetime = datetime.datetime.fromtimestamp(created_at_timestamp)
             hashed_url = get_hash8(url)
             sentiment_analysis = item.get('analysis', None)
             neg_sentiment_rating = None
@@ -219,7 +224,7 @@ class UserProfile(models.Model):
                     user=self, type=content_type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                    extra_data=extra_data, hidden=False, report=report,
+                    extra_data=extra_data, hidden=False, report=report, post_created_at =created_at_datetime,
                 )
 
             except Exception, e:
@@ -352,7 +357,7 @@ class UserProfile(models.Model):
                     user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
                     neut_sentiment_rating=neut_sentiment_rating, sentiment_label=sentiment_label,
-                    extra_data=extra_data, hidden=False, report=report
+                    extra_data=extra_data, hidden=False, report=report, post_created_at=datetime.datetime.now()
                 )
 
             except Exception, e:
@@ -449,6 +454,7 @@ class UserContent(models.Model):
     extra_data = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    post_created_at = models.DateTimeField(null=True, default=None, blank=True)
     report = models.ForeignKey(Report, null=True, default=None)
 
     def take_down(self):
