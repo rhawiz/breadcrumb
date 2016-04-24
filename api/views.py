@@ -150,11 +150,14 @@ class Scan(APIView):
     def post(self, request, *args, **kwargs):
         token = request.META.get('HTTP_AUTHORIZATION', None)
         user_profile = get_user_profile_from_token(token)
+
+        source = kwargs.get("source") or None
+
         try:
-            scan_user_content.delay(str(user_profile.pk))
+            scan_user_content.delay(str(user_profile.pk), source)
         except Exception, e:
             print e
-            scan_user_content(str(user_profile.pk))
+            scan_user_content(str(user_profile.pk), source)
 
         return Response(status=status.HTTP_200_OK)
 

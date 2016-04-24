@@ -82,7 +82,10 @@ class UserProfile(models.Model):
         self._scan_web_content(report)
         self._scan_images(report)
 
-    def _scan_facebook_content(self, report):
+    def _scan_facebook_content(self, report=None):
+        if not report:
+            formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+            report = Report.objects.create(name=formatted_date, user_profile=self)
         try:
             fb_account = SocialAccount.objects.get(user_profile=self, provider='facebook')
         except SocialAccount.DoesNotExist:
@@ -142,7 +145,10 @@ class UserProfile(models.Model):
                     old_content[0].save()
             print "Twitter scan complete."
 
-    def _scan_twitter_content(self, report):
+    def _scan_twitter_content(self, report=None):
+        if not report:
+            formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+            report = Report.objects.create(name=formatted_date, user_profile=self)
         try:
             twitter_account = SocialAccount.objects.get(user_profile=self, provider='twitter')
         except SocialAccount.DoesNotExist:
@@ -216,8 +222,11 @@ class UserProfile(models.Model):
                     old_content[0].save()
             print "Twitter scan complete."
 
-    def _scan_images(self, report):
+    def _scan_images(self, report=None):
         pass
+        if not report:
+            formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+            report = Report.objects.create(name=formatted_date, user_profile=self)
         # model = facial_recognition.get_model()
         model = None
         if not model:
@@ -280,7 +289,10 @@ class UserProfile(models.Model):
                     print e
         print "Image scan complete"
 
-    def _scan_web_content(self, report):
+    def _scan_web_content(self, report=None):
+        if not report:
+            formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+            report = Report.objects.create(name=formatted_date, user_profile=self)
         search_content = []
 
         fullname = "%s %s" % (self.user.first_name, self.user.last_name)
