@@ -405,6 +405,13 @@ class Report(models.Model):
     name = models.CharField(null=True, blank=True, max_length=255)
     user_profile = models.ForeignKey(UserProfile, null=True, default=None)
 
+    def formatted_date(self, format='%A %d %b %Y, %I:%M%p'):
+        return str(self.created_at.strftime(format))
+
+    def __unicode__(self):
+        return self.name
+
+
 
 class UserContent(models.Model):
     SOURCE_FACEBOOK = 'facebook'
