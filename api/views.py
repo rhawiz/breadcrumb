@@ -87,8 +87,8 @@ class ProfileDetail(APIView):
             ppos = (pos / total)
             pneg = (neg / total)
 
-        pos_norm = ppos * 900
-        neg_norm = pneg * 900
+        pos_norm = ppos
+        neg_norm = pneg
 
         data = {
             "positive": float("%.3f" % pos_norm),
