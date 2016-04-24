@@ -23,7 +23,7 @@ def scan_user_content(user_profile_id, source):
     if isinstance(user_profile, UserProfile):
         formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
         report = Report.objects.create(name=formatted_date, user_profile=user_profile)
-        print "****************************",source, "*************************************"
+        print "****************************", source, "*************************************"
         if source == 'web':
             print "Scanning web content..."
             user_profile._scan_web_content(report)

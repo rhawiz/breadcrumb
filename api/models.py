@@ -95,7 +95,7 @@ class UserProfile(models.Model):
         fc = FacebookCollector(access_token=access_token, sentiment_analyser=analyse_text)
 
         attempts = 0
-        facebook_content=[]
+        facebook_content = []
         while attempts <= 4:
             try:
                 facebook_content = fc.run()
@@ -132,6 +132,9 @@ class UserProfile(models.Model):
             try:
                 for c in old_content:
                     c.soft_delete()
+                if not report or not isinstance(report, Report):
+                    formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+                    report = Report.objects.create(name=formatted_date, user_profile=self)
                 UserContent.objects.create(
                     user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
@@ -167,7 +170,7 @@ class UserProfile(models.Model):
             consumer_key=consumer_key,
         )
         attempts = 0
-        twitter_content=[]
+        twitter_content = []
         while attempts <= 4:
             try:
                 twitter_content = tc.run()
@@ -208,6 +211,9 @@ class UserProfile(models.Model):
             try:
                 for c in old_content:
                     c.soft_delete()
+                if not report or not isinstance(report, Report):
+                    formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+                    report = Report.objects.create(name=formatted_date, user_profile=self)
                 UserContent.objects.create(
                     user=self, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
@@ -290,9 +296,6 @@ class UserProfile(models.Model):
         print "Image scan complete"
 
     def _scan_web_content(self, report=None):
-        if not report:
-            formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
-            report = Report.objects.create(name=formatted_date, user_profile=self)
         search_content = []
 
         fullname = "%s %s" % (self.user.first_name, self.user.last_name)
@@ -340,6 +343,9 @@ class UserProfile(models.Model):
             try:
                 for c in old_content:
                     c.soft_delete()
+                if not report or not isinstance(report, Report):
+                    formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
+                    report = Report.objects.create(name=formatted_date, user_profile=self)
                 UserContent.objects.create(
                     user=user, type=type, source=source, content=content, url=url, hashed_url=hashed_url,
                     neg_sentiment_rating=neg_sentiment_rating, pos_sentiment_rating=pos_sentiment_rating,
