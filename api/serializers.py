@@ -800,7 +800,7 @@ class PublishPostSerializer(serializers.Serializer):
             response_content = response.json()
             msg_url = None
             if 'id' in response_content:
-                url = "https://www.facebook.com/%s" % response_content.get("id")
+                msg_url = "https://www.facebook.com/%s" % response_content.get("id")
         elif provider == 'twitter':
             url_safe_msg = urllib.quote(message)
             url = "https://api.twitter.com/1.1/statuses/update.json?status=%s" % url_safe_msg
