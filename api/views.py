@@ -641,7 +641,7 @@ class Insights(APIView):
             tweets = []
             tag = trend["name"]
             tweet_volume = trend["tweet_volume"]
-            recommendation = "Create a new Twitter post relating to %s" % tag
+            recommendation = "Create a new post relating to %s" % tag
             insight = {
                 "tag": tag,
                 "tweets": tweets,
@@ -710,6 +710,24 @@ class PublishPost(APIView):
         data["access_token"] = request.META.get('HTTP_AUTHORIZATION', None)
         serializer = PublishPostSerializer(data=data)
 
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(data=serializer.data)
+
+class Retweet(APIView):
+    """
+    Retweet a twitter status
+    HTTP POST
+    """
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        data["access_token"] = request.META.get('HTTP_AUTHORIZATION', None)
+        data['tweet_id'] = kwargs.get("tweet_id")
+        serializer = RetweetSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 

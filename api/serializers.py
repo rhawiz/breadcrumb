@@ -147,6 +147,7 @@ class ReportDetailSerializer(serializers.ModelSerializer):
             'id', 'name', 'created_at', 'content'
         )
 
+
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
     """
     Update user profile serializer
@@ -877,5 +878,51 @@ class PublishPostSerializer(serializers.Serializer):
         return {
             'provider': provider,
             'message': message,
+            'user': user_profile
+        }
+
+class RetweetSerializer(serializers.Serializer):
+    """
+    Serializer to retweet a twitter post
+    """
+    tweet_id = serializers.CharField(required=True)
+    access_token = serializers.CharField(required=True)
+
+    def create(self, validated_data):
+        tweet_id = validated_data.get('tweet_id')
+        user = validated_data.get('user')
+        social_account = SocialAccount.objects.get(user_profile=user, provider='twitter')
+
+        url = "https://api.twitter.com/1.1/statuses/retweet/%s.json" % tweet_id
+        auth = OAuth1(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET, social_account.social_token,
+                      social_account.social_secret)
+        response = requests.post(url=url, auth=auth)
+        response_content = response.json()
+        msg_url = None
+        if 'id' in response_content:
+            msg_url = "https://www.twitter.com/%s/status/%s" % (
+                response_content.get('user').get('screen_name'), response_content.get('id'))
+
+        self._data = {
+            'provider_response': response_content,
+            'url': msg_url
+        }
+
+        return user
+
+    def validate(self, data):
+        tweet_id = data.get('tweet_id', None)
+        access_token = data.get('access_token', None)
+        user_profile = get_user_profile_from_token(access_token)
+        if not tweet_id:
+            raise ValidationError(detail={'tweet_id': 'This field is required.'})
+
+        try:
+            SocialAccount.objects.get(user_profile=user_profile, provider='twitter')
+        except SocialAccount.DoesNotExist:
+            raise ValidationError(detail={'error': 'User profile does not have a twitter account'})
+
+        return {
+            'tweet_id': tweet_id,
             'user': user_profile
         }

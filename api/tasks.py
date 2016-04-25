@@ -30,6 +30,7 @@ def scan_user_content(user_profile_id, source):
             print "Scanning twitter content..."
             user_profile._scan_twitter_content(report)
         else:
+            print "Scanning all content..."
             user_profile.generate_report()
 
 
