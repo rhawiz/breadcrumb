@@ -662,7 +662,7 @@ class Insights(APIView):
                 tweet_data = {
                     "screen_name": screen_name,
                     "text": text,
-                    "tweet_id": tweet_id,
+                    "tweet_id": str(tweet_id),
                     "favourites_count": favourites_count,
                     "retweets_count": retweets_count,
                     "user_photo_url": user_photo_url,
