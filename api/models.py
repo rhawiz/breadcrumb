@@ -66,6 +66,7 @@ class UserProfile(models.Model):
     web_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
     facebook_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
+    phone = models.CharField(max_length=64, null=True, blank=True)
 
     def get_avatar_url(self):
         """
@@ -497,7 +498,6 @@ class UserContent(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     post_created_at = models.DateTimeField(null=True, default=None, blank=True)
     report = models.ForeignKey(Report, null=True, default=None)
-    phone = models.CharField(max_length=64, blank=True, null=True)
 
     def take_down(self):
         """

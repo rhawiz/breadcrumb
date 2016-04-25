@@ -86,7 +86,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases', 'avatar')
+        fields = ('id', 'gender', 'username', 'email', 'first_name', 'last_name', 'aliases', 'avatar', 'phone')
 
 
 class ContentSerializer(serializers.ModelSerializer):
@@ -159,7 +159,6 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
     aliases = serializers.ListField(required=False, write_only=True)
     avatar_base64 = serializers.CharField(required=False, write_only=True)
     avatar_url = serializers.CharField(required=False, write_only=True)
-    phone = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = UserProfile
