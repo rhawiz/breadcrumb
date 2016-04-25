@@ -634,7 +634,7 @@ class Insights(APIView):
 
         api = tweepy.API(auth)
 
-        trend_list = api.trends_place(23424975)[0].get("trends")[0:10] or []
+        trend_list = api.trends_place(23424975)[0].get("trends")[0:5] or []
 
         insight_list = []
         for trend in trend_list:
