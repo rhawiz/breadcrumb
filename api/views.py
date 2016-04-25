@@ -1,30 +1,22 @@
-import pickle
-from importlib import import_module
-
-import sys
 from random import randint, randrange, uniform
-
-import tweepy
 from django.contrib.sessions.backends.db import SessionStore
 from django.http import HttpResponseRedirect, JsonResponse
 from oauth2_provider.ext.rest_framework import OAuth2Authentication, TokenHasReadWriteScope
 from django.contrib.sessions.models import Session
 from rest_framework import generics
-from rest_framework.decorators import permission_classes, authentication_classes, api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from breadcrumbcore.ai.sentimentanalyser import analyse_text as sa
 from api.serializers import *
-from breadcrumbcore.searchengines.googlesearch import GoogleWebSearch
-
-# Create your views here.
 from api.utils import get_user_profile_from_token
 from api.tasks import scan_user_content
 
 
 class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a UserProfile
+    HTTP GET, PUT and DELETE
+    """
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
@@ -39,6 +31,10 @@ class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class CurrentUserDetail(APIView):
+    """
+    Get or update current user details
+    HTTP GET and PUT
+    """
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
@@ -59,6 +55,10 @@ class CurrentUserDetail(APIView):
 
 
 class ProfileDetail(APIView):
+    """
+    Get content for the profiles page
+    HTTP GET
+    """
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
@@ -67,19 +67,21 @@ class ProfileDetail(APIView):
 
         user_profile = get_user_profile_from_token(token)
 
+        # Get all user contents
         content_list = UserContent.objects.filter(user=user_profile)
 
         pos = 0.0
         neg = 0.0
 
+        # Sum up total positive and negative scores
         for content in content_list:
-            if content.pos_sentiment_rating:
+            if content.pos_sentiment_rating is not None:
                 pos = pos + float(content.pos_sentiment_rating)
-            if content.neg_sentiment_rating:
+            if content.neg_sentiment_rating is not None:
                 neg = neg + float(content.neg_sentiment_rating)
 
+        # Total scores and normalise
         total = pos + neg
-
         ppos = 0.0
         pneg = 0.0
 
@@ -99,6 +101,11 @@ class ProfileDetail(APIView):
 
 
 class AccountList(generics.ListAPIView):
+    """
+    List all accounts associated with the user
+    HTTP GET
+    """
+
     queryset = SocialAccount.objects.all()
     serializer_class = AccountSerializer
     authentication_classes = (OAuth2Authentication,)
@@ -132,6 +139,10 @@ class AccountList(generics.ListAPIView):
 
 
 class ReportList(generics.ListAPIView):
+    """
+    List all reports
+    HTTP GET
+    """
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
     authentication_classes = (OAuth2Authentication,)
@@ -162,6 +173,10 @@ class ReportList(generics.ListAPIView):
 
 
 class ReportDetail(generics.RetrieveDestroyAPIView):
+    """
+    Get details of a report or delete a report
+    HTTP GET and DELETE
+    """
     queryset = Report.objects.all()
     serializer_class = ReportDetailSerializer
     authentication_classes = (OAuth2Authentication,)
@@ -175,6 +190,10 @@ class ReportDetail(generics.RetrieveDestroyAPIView):
 
 
 class UserProfileList(generics.ListAPIView):
+    """
+    List all users
+    HTTP GET
+    """
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     authentication_classes = (OAuth2Authentication,)
@@ -185,6 +204,10 @@ class UserProfileList(generics.ListAPIView):
 
 
 class Scan(APIView):
+    """
+    Start a scan and gather user content
+    HTTP POST
+    """
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     authentication_classes = (OAuth2Authentication,)
@@ -208,6 +231,10 @@ class Scan(APIView):
 
 
 class Signup(generics.CreateAPIView):
+    """
+    Username/email signup
+    HTTP POST
+    """
     queryset = UserProfile.objects.all()
     serializer_class = SignupSerializer
 
@@ -222,6 +249,10 @@ class Signup(generics.CreateAPIView):
 
 
 class Login(APIView):
+    """
+    Username/email Login. Generate access token for a session.
+    HTTP POST
+    """
     queryset = AccessToken.objects.all()
 
     def post(self, request, *args, **kwargs):
@@ -232,6 +263,10 @@ class Login(APIView):
 
 
 class Logout(APIView):
+    """
+    Revoke an access token
+    HTTP POST
+    """
     queryset = AccessToken.objects.all()
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
@@ -244,6 +279,10 @@ class Logout(APIView):
 
 
 class UploadImage(APIView):
+    """
+    Upload an image
+    HTTP POST
+    """
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
@@ -257,6 +296,11 @@ class UploadImage(APIView):
 
 
 class FacebookLogin(APIView):
+    """
+    Redirect to facebook's authentication system
+    HTTP GET
+    """
+
     def get(self, request, *args, **kwargs):
         scope = "email,public_profile,user_friends,user_likes,user_photos,user_posts,publish_actions,publish_pages,manage_pages"
         base_url = "https://www.facebook.com/dialog/oauth?scope={scope}&client_id={client_id}&redirect_uri={callback_url}"
@@ -273,6 +317,10 @@ class FacebookLogin(APIView):
 
 
 class LinkFacebookAccount(APIView):
+    """
+    Link a Facebook account with the current user
+    HTTP GET
+    """
     authentication_classes = (OAuth2Authentication,)
 
     # permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
@@ -295,6 +343,12 @@ class LinkFacebookAccount(APIView):
 
 
 class FacebookCallback(APIView):
+    """
+    Facebook api will call this endpoint after authenticating a user.
+    Handles creation/retrieval of the user profile and generate an access token
+    HTTP GET
+    """
+
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code', None)
         data = {'code': code}
@@ -317,6 +371,10 @@ class FacebookCallback(APIView):
 
 
 class LinkTwitterAccount(APIView):
+    """
+    Link a twitter account with the current user
+    HTTP GET
+    """
     authentication_classes = (OAuth2Authentication,)
 
     # permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
@@ -344,6 +402,11 @@ class LinkTwitterAccount(APIView):
 
 
 class TwitterLogin(APIView):
+    """
+    Redirect to Twitter's authentication screen
+    HTTP GET
+    """
+
     def get(self, request, *args, **kwargs):
         auth = tweepy.OAuthHandler(
             settings.TWITTER_CONSUMER_KEY,
@@ -364,6 +427,12 @@ class TwitterLogin(APIView):
 
 
 class TwitterCallback(APIView):
+    """
+    Twitter api will call this endpoint after authenticating a user.
+    Handles creation/retrieval of the user profile and generate an access token
+    HTTP GET
+    """
+
     def get(self, request, *args, **kwargs):
         if 'denied' in request.GET:
             return Response()
@@ -393,6 +462,10 @@ class TwitterCallback(APIView):
 
 
 class AccountDetail(APIView):
+    """
+    Get details of a user's account
+    HTTP GET
+    """
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
@@ -459,6 +532,10 @@ class AccountDetail(APIView):
 
 
 class ContentList(generics.ListAPIView):
+    """
+    Get the list user content
+    HTTP GET
+    """
     queryset = UserContent.objects.all()
     serializer_class = ContentSerializer
     authentication_classes = (OAuth2Authentication,)
@@ -515,6 +592,10 @@ class ContentList(generics.ListAPIView):
 
 
 class TakedownPost(APIView):
+    """
+    Attempt to take down a post that breadcrumb has found
+    HTTP DELETE
+    """
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
@@ -532,6 +613,10 @@ class TakedownPost(APIView):
 
 
 class Insights(APIView):
+    """
+    Generate custom user insights using trending topics
+    HTTP GET
+    """
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 
@@ -591,6 +676,10 @@ class Insights(APIView):
 
 
 class ContentDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Get details about a content
+    HTTP GET
+    """
     queryset = UserContent.objects.all()
     serializer_class = ContentSerializer
     authentication_classes = (OAuth2Authentication,)
@@ -609,6 +698,10 @@ class ContentDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class PublishPost(APIView):
+    """
+    Post a twitter or facebook post
+    HTTP POST
+    """
     authentication_classes = (OAuth2Authentication,)
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
 

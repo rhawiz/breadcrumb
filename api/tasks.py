@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 import datetime
-
 import uuid
-from time import sleep
-
 from celery.utils.log import get_task_logger
 from celery import task, shared_task
 from api.models import UserProfile, Report

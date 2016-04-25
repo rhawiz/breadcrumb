@@ -1,37 +1,25 @@
-import os
 import urllib2
 import urlparse
 from base64 import b64decode
 from tempfile import NamedTemporaryFile
-
-import requests
-from django.contrib.sessions.backends.db import SessionStore
-import tweepy
-from django.conf import settings
 from django.contrib.auth import authenticate
-from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
-from io import BytesIO
-
 from django.core.files.base import ContentFile
 from oauth2_provider.models import Application, AccessToken
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from api.exceptions import *
 from rest_framework.exceptions import *
-
-# from api.facial_recognition import update_face_rec_model
 from api.models import *
-from rest_framework.utils import model_meta
-
 from api.utils import generate_access_token, get_user_profile_from_token, is_valid_base64, supermakedirs
-from rest_framework.fields import empty
 import time
 import requests as r
 from requests_oauthlib import OAuth2, OAuth1
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer to create and update a auth_user
+    """
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -59,6 +47,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class AccountSerializer(serializers.Serializer):
+    """
+    Account serializer to display account overviews
+    """
     account = serializers.CharField(required=True)
     name = serializers.CharField(required=True)
 
@@ -69,6 +60,9 @@ class AccountSerializer(serializers.Serializer):
 
 
 class AccountDetailSerializer(serializers.Serializer):
+    """
+    Account serializer to read user account details
+    """
     positive = serializers.IntegerField()
     negative = serializers.IntegerField()
     neutral = serializers.IntegerField()
@@ -81,6 +75,9 @@ class AccountDetailSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    User Profile serializer to view user information
+    """
     username = serializers.CharField(read_only=True, source='user.username')
     email = serializers.CharField(read_only=True, source='user.email')
     first_name = serializers.CharField(read_only=True, source='user.first_name')
@@ -93,6 +90,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class ContentSerializer(serializers.ModelSerializer):
+    """
+    Content serializer to view content details
+    """
     created_at_timestamp = serializers.SerializerMethodField('_get_post_created_timestamp')
     sentiment = serializers.SerializerMethodField('_get_sentiment')
 
@@ -123,6 +123,9 @@ class ContentSerializer(serializers.ModelSerializer):
 
 
 class ReportSerializer(serializers.ModelSerializer):
+    """
+    Report serializer to view report details
+    """
     content_count = serializers.IntegerField(source='get_content_count', read_only=True)
 
     class Meta:
@@ -133,6 +136,9 @@ class ReportSerializer(serializers.ModelSerializer):
 
 
 class ReportDetailSerializer(serializers.ModelSerializer):
+    """
+    Report detail serializer
+    """
     content = ContentSerializer(source='_get_content', many=True)
 
     class Meta:
@@ -141,8 +147,10 @@ class ReportDetailSerializer(serializers.ModelSerializer):
             'id', 'name', 'created_at', 'content'
         )
 
-
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
+    """
+    Update user profile serializer
+    """
     username = serializers.CharField(required=False, write_only=True)
     email = serializers.CharField(required=False, write_only=True)
     first_name = serializers.CharField(required=False, write_only=True)
@@ -150,19 +158,22 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
     aliases = serializers.ListField(required=False, write_only=True)
     avatar_base64 = serializers.CharField(required=False, write_only=True)
     avatar_url = serializers.CharField(required=False, write_only=True)
+    phone = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = UserProfile
-        fields = ('username', 'email', 'first_name', 'last_name', 'aliases', 'avatar_base64', 'avatar_url')
+        fields = ('username', 'email', 'first_name', 'last_name', 'aliases', 'avatar_base64', 'avatar_url', 'phone')
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             if attr == 'avatar_base64':
+                # Decode base 64 data and save to the server
                 avatar_base64 = b64decode(validated_data.get('avatar_base64'))
                 img_filename = "%s.%s" % (str(uuid.uuid4()), "jpg")
                 instance.avatar = ContentFile(avatar_base64, img_filename)
                 instance.save()
             elif attr == 'avatar_url':
+                # Download the image from the url and save to server
                 avatar_url = validated_data.get('avatar_url')
                 response = urllib2.urlopen(avatar_url)
                 content_type = response.info().getheader('Content-Type')
@@ -187,6 +198,9 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.Serializer):
+    """
+    Create a user profile and generate an access token
+    """
     username = serializers.CharField(required=True, write_only=True)
     email = serializers.CharField(required=True, write_only=True)
     password = serializers.CharField(required=True, write_only=True)
@@ -260,6 +274,9 @@ class SignupSerializer(serializers.Serializer):
 
 
 class FacebookLoginSerializer(serializers.Serializer):
+    """
+    Serializer to handle validating and creating/retrieving an account using Facebooks authentication
+    """
     code = serializers.CharField(required=True)
 
     class Meta:
@@ -378,6 +395,9 @@ class FacebookLoginSerializer(serializers.Serializer):
 
 
 class LinkFacebookAccountSerializer(serializers.Serializer):
+    """
+    Link facebook account serializer
+    """
     code = serializers.CharField(required=True)
     access_token = serializers.CharField(required=True)
 
@@ -471,6 +491,9 @@ class LinkFacebookAccountSerializer(serializers.Serializer):
 
 
 class LinkTwitterAccountSerializer(serializers.Serializer):
+    """
+    Link twitter account serializer
+    """
     oauth_verifier = serializers.CharField(write_only=True)
     request_token = serializers.DictField(write_only=True)
     access_token = serializers.CharField(write_only=True)
@@ -558,6 +581,9 @@ class LinkTwitterAccountSerializer(serializers.Serializer):
 
 
 class TwitterLoginSerializer(serializers.Serializer):
+    """
+    Login/signup using twitters authentication system
+    """
     oauth_verifier = serializers.CharField(write_only=True)
     request_token = serializers.DictField(write_only=True)
 
@@ -672,6 +698,9 @@ class TwitterLoginSerializer(serializers.Serializer):
 
 
 class AccessTokenSerializer(serializers.ModelSerializer):
+    """
+    Serializer to handle retrieval and creation of access tokens
+    """
     expires = serializers.SerializerMethodField('_get_expires_timestamp')
 
     class Meta:
@@ -683,6 +712,9 @@ class AccessTokenSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.ModelSerializer):
+    """
+    Serializer to authenticate a user and generate an access token when a user logins
+    """
     username = serializers.CharField(required=False)
     password = serializers.CharField(required=True)
     email = serializers.CharField(required=False)
@@ -724,6 +756,9 @@ class LoginSerializer(serializers.ModelSerializer):
 
 
 class UploadImageSerializer(serializers.ModelSerializer):
+    """
+    Serializer to handle the image upload functionality
+    """
     image_base64 = serializers.CharField(required=True)
     access_token = serializers.CharField(required=True)
     name = serializers.CharField(required=False)
@@ -781,6 +816,9 @@ class UploadImageSerializer(serializers.ModelSerializer):
 
 
 class PublishPostSerializer(serializers.Serializer):
+    """
+    Serializer to validate and send a facebook or twitter message
+    """
     provider = serializers.CharField(required=True)
     message = serializers.CharField(required=True)
     access_token = serializers.CharField(required=True)

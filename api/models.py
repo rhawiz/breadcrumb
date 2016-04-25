@@ -43,6 +43,9 @@ def get_upload_avatar_path(instance, filename):
 
 
 class UserProfile(models.Model):
+    """
+    Model to store a user profile
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, blank=False, null=False)
 
@@ -65,11 +68,19 @@ class UserProfile(models.Model):
     twitter_last_scanned = models.DateTimeField(blank=True, null=True, default=None)
 
     def get_avatar_url(self):
+        """
+        Get the avatar url
+        :return: The avatar URL or None if not set
+        """
         if self.avatar and hasattr(self.avatar, 'url'):
             return self.avatar.url
         return None
 
     def generate_report(self):
+        """
+        Scan for user content and generate a report
+        :return: None
+        """
         formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
         report = Report.objects.create(name=formatted_date, user_profile=self)
         self._scan_twitter_content(report)
@@ -78,6 +89,11 @@ class UserProfile(models.Model):
         self._scan_images(report)
 
     def _scan_facebook_content(self, report=None):
+        """
+        Scan users facebook account and analyse content
+        :param report: Associated Report object
+        :return: None
+        """
         if not report:
             formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
             report = Report.objects.create(name=formatted_date, user_profile=self)
@@ -147,6 +163,11 @@ class UserProfile(models.Model):
             print "Twitter scan complete."
 
     def _scan_twitter_content(self, report=None):
+        """
+        Scan users twitter account and analyse content
+        :param report: Associated Report object
+        :return: None
+        """
         if not report:
             formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
             report = Report.objects.create(name=formatted_date, user_profile=self)
@@ -230,6 +251,11 @@ class UserProfile(models.Model):
             print "Twitter scan complete."
 
     def _scan_images(self, report=None):
+        """
+        Scan user images and analyse content
+        :param report: Associated Report object
+        :return: None
+        """
         pass
         if not report:
             formatted_date = str(datetime.date.today().strftime('%A %d %b %Y, %I:%M%p'))
@@ -297,6 +323,12 @@ class UserProfile(models.Model):
         print "Image scan complete"
 
     def _scan_web_content(self, report=None):
+        """
+        Scan web for content and analyse content
+        :param report: Associated Report object
+        :return: None
+        """
+
         search_content = []
 
         fullname = "%s %s" % (self.user.first_name, self.user.last_name)
@@ -367,6 +399,9 @@ class UserProfile(models.Model):
 
 
 class SocialAccount(models.Model):
+    """
+    Model for storing a users social account (facebook/twitter)
+    """
     PROVIDER_CHOICE_FACEBOOK = 'facebook'
     PROVIDER_CHOICE_TWITTER = 'twitter'
     PROVIDER_CHOICES = (
@@ -390,6 +425,9 @@ class SocialAccount(models.Model):
 
 
 class Image(models.Model):
+    """
+    Model to store image data
+    """
     name = models.CharField(max_length=255)
     url = models.URLField()
     user_profile = models.ForeignKey(UserProfile)
@@ -400,6 +438,9 @@ class Image(models.Model):
 
 
 class Report(models.Model):
+    """
+    Model to store a report
+    """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     name = models.CharField(null=True, blank=True, max_length=255)
@@ -419,6 +460,9 @@ class Report(models.Model):
 
 
 class UserContent(models.Model):
+    """
+    Model to store a user information
+    """
     SOURCE_FACEBOOK = 'facebook'
     SOURCE_TWITTER = 'twitter'
     SOURCE_WEB = 'web'
@@ -453,8 +497,13 @@ class UserContent(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     post_created_at = models.DateTimeField(null=True, default=None, blank=True)
     report = models.ForeignKey(Report, null=True, default=None)
+    phone = models.CharField(max_length=64, blank=True, null=True)
 
     def take_down(self):
+        """
+        Attempt to take down the content
+        :return:
+        """
         if self.source == 'facebook':
             pass
         elif self.source == 'twitter':

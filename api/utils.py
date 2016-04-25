@@ -1,10 +1,7 @@
 import base64
 import datetime
-import requests
-
 import binascii
 import os
-
 from django.contrib.auth.models import User
 from oauth2_provider.models import Application, AccessToken
 from oauth2_provider.settings import oauth2_settings
