@@ -128,7 +128,7 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = (
-            'id', 'name', 'created_at',
+            'id', 'name', 'created_at', 'content_count'
         )
 
 
