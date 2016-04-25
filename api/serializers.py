@@ -115,7 +115,9 @@ class ContentSerializer(serializers.ModelSerializer):
         }
 
     def _get_post_created_timestamp(self, obj):
-        return int(time.mktime(obj.post_created_date.timetuple()))
+        if obj.post_created_at:
+            return int(time.mktime(obj.post_created_at.timetuple()))
+        return int(time.mktime(obj.created_at.timetuple()))
 
     def _get_sentiment(self, obj):
         return {
@@ -810,7 +812,8 @@ class PublishPostSerializer(serializers.Serializer):
             response_content = response.json()
             msg_url = None
             if 'id' in response_content:
-                msg_url = "https://www.twitter.com/%s/status/%s" % (response_content.get('user').get('screen_name'), response_content.get('id'))
+                msg_url = "https://www.twitter.com/%s/status/%s" % (
+                response_content.get('user').get('screen_name'), response_content.get('id'))
 
         self._data = {
             'provider_response': response_content,
