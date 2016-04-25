@@ -31,12 +31,6 @@ import requests as r
 from requests_oauthlib import OAuth2, OAuth1
 
 
-class TestSerizalizer(serializers.ModelSerializer):
-    class Meta:
-        model = TestModel
-        fields = ('field1', 'field2')
-
-
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -129,6 +123,8 @@ class ContentSerializer(serializers.ModelSerializer):
 
 
 class ReportSerializer(serializers.ModelSerializer):
+    content_count = serializers.IntegerField(source='get_content_count', read_only=True)
+
     class Meta:
         model = Report
         fields = (
@@ -813,7 +809,7 @@ class PublishPostSerializer(serializers.Serializer):
             msg_url = None
             if 'id' in response_content:
                 msg_url = "https://www.twitter.com/%s/status/%s" % (
-                response_content.get('user').get('screen_name'), response_content.get('id'))
+                    response_content.get('user').get('screen_name'), response_content.get('id'))
 
         self._data = {
             'provider_response': response_content,
