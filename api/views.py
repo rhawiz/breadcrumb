@@ -26,6 +26,8 @@ from api.tasks import scan_user_content
 
 class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = UserProfile.objects.all()
+
+
     serializer_class = UserProfileSerializer
 
     def get(self, request, *args, **kwargs):

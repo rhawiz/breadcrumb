@@ -229,6 +229,7 @@ class SignupSerializer(serializers.Serializer):
         user_profile_data['user'] = user
 
         user_profile = UserProfile.objects.create(**user_profile_data)
+
         user_profile.save()
 
         if 'avatar_base64' in validated_data:
