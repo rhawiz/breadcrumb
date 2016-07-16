@@ -50,6 +50,7 @@ urlpatterns = [
 
     url(r'^profile/$', views.ProfileDetail.as_view(), name="profile"),
     url(r'^publish_post/$', views.PublishPost.as_view(), name="publish_post"),
+    url(r'^retweet/(?P<tweet_id>[^/]+)/$', views.Retweet.as_view(), name="publish_post"),
 
     # url(r"^logout/$", views.Logout.as_view(), name="logout"),
 
